@@ -138,8 +138,8 @@ Output:
 
 ```
 items[2]{sku,qty,price}:
-  9.99,2,A1
-  14.5,1,B2
+  A1,2,9.99
+  B2,1,14.5
 ```
 
 ### Arrays of Arrays
