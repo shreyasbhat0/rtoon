@@ -2,10 +2,10 @@
 name = "rtoon"
 version = "0.1.0"
 edition = "2021"
-authors = ["TOON Contributors"]
+authors = ["Shreyas K S <ks.shreyas0@gmail.com>"]
 license = "MIT"
 description = "Token-Oriented Object Notation - A compact, human-readable format for LLM data with 30-60% fewer tokens than JSON"
-repository = "https://github.com/yourusername/toon-rs"
+repository = "https://github.com/shreyasbhat0/rtoon"
 keywords = ["llm", "serialization", "tokens", "ai", "encoding"]
 categories = ["encoding", "parser-implementations", "text-processing"]
 readme = "README.md"
