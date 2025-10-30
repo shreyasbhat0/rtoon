@@ -1,0 +1,23 @@
+[package]
+name = "rtoon"
+version = "0.1.0"
+edition = "2021"
+authors = ["TOON Contributors"]
+license = "MIT"
+description = "Token-Oriented Object Notation - A compact, human-readable format for LLM data with 30-60% fewer tokens than JSON"
+repository = "https://github.com/yourusername/toon-rs"
+keywords = ["llm", "serialization", "tokens", "ai", "encoding"]
+categories = ["encoding", "parser-implementations", "text-processing"]
+readme = "README.md"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0.17"
+
+[dev-dependencies]
+pretty_assertions = "1.4"
+
+[[example]]
+name = "examples"
+path = "examples/main.rs"
