@@ -1,7 +1,7 @@
 # TOON (Token-Oriented Object Notation) — Rust
 
 [![Crates.io](https://img.shields.io/crates/v/rtoon)](https://crates.io/crates/rtoon)
-[![CI](https://github.com/shreyasbhat0/toon-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/shreyasbhat0/toon-rs/actions/workflows/ci.yml)
+[![CI](https://github.com/shreyasbhat0/toon-rs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/shreyasbhat0/toon-rs/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/shreyasbhat0/toon-rs/actions/workflows/ci.yml)
 
 TOON is a compact, human-readable format designed to pass structured data to Large Language Models with fewer tokens than JSON. This is a Rust implementation.
