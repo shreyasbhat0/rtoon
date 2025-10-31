@@ -63,10 +63,7 @@ jobs:
       
       - name: Install git-cliff
         run: |
-          CLIFF_VERSION="2.6.0"
-          ARCH="x86_64-unknown-linux-gnu"
-          curl -L "https://github.com/orhun/git-cliff/releases/download/v${CLIFF_VERSION}/git-cliff-${CLIFF_VERSION}-${ARCH}.tar.gz" | tar xz
-          sudo mv git-cliff /usr/local/bin/
+          cargo install git-cliff --locked
           git-cliff --version
       
       - name: Get default branch
