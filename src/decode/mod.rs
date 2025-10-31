@@ -14,7 +14,11 @@ use crate::{
 /// # Examples
 ///
 /// ```
-/// use rtoon::{decode, DecodeOptions, Delimiter};
+/// use rtoon::{
+///     decode,
+///     DecodeOptions,
+///     Delimiter,
+/// };
 /// use serde_json::json;
 ///
 /// let input = "name: Alice\nage: 30";
@@ -54,7 +58,10 @@ pub fn decode_strict(input: &str) -> ToonResult<Value> {
 /// # Examples
 ///
 /// ```
-/// use rtoon::{decode_strict_with_options, DecodeOptions};
+/// use rtoon::{
+///     decode_strict_with_options,
+///     DecodeOptions,
+/// };
 /// use serde_json::json;
 ///
 /// let options = DecodeOptions::new()
@@ -95,7 +102,10 @@ pub fn decode_no_coerce(input: &str) -> ToonResult<Value> {
 /// # Examples
 ///
 /// ```
-/// use rtoon::{decode_no_coerce_with_options, DecodeOptions};
+/// use rtoon::{
+///     decode_no_coerce_with_options,
+///     DecodeOptions,
+/// };
 /// use serde_json::json;
 ///
 /// let options = DecodeOptions::new()

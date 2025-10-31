@@ -40,7 +40,10 @@ pub use error::{
     ToonError,
     ToonResult,
 };
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 pub use types::{
     DecodeOptions,
     Delimiter,
@@ -59,11 +62,11 @@ pub use utils::{
     },
 };
 
-
 /// Serialize any Rust type that implements `Serialize` to TOON format.
 ///
 /// This function converts the value to JSON first, then encodes it to TOON.
-/// You can optionally provide custom encoding options to control the output format.
+/// You can optionally provide custom encoding options to control the output
+/// format.
 ///
 /// # Arguments
 ///
@@ -97,7 +100,10 @@ pub use utils::{
 /// ## With custom options
 ///
 /// ```
-/// use rtoon::{EncodeOptions, Delimiter};
+/// use rtoon::{
+///     Delimiter,
+///     EncodeOptions,
+/// };
 /// use serde::Serialize;
 ///
 /// #[derive(Serialize)]
@@ -118,28 +124,28 @@ pub use utils::{
 /// assert!(toon.contains("[#"));
 /// # Ok::<(), rtoon::ToonError>(())
 /// ```
-pub fn to_toon<T: Serialize>(
-    value: &T,
-    options: Option<&EncodeOptions>,
-) -> ToonResult<String> {
+pub fn to_toon<T: Serialize>(value: &T, options: Option<&EncodeOptions>) -> ToonResult<String> {
     let json_value = serde_json::to_value(value)
         .map_err(|e| ToonError::InvalidInput(format!("Serialization error: {}", e)))?;
-    
+
     match options {
         Some(opts) => encode(&json_value, opts),
         None => encode_default(&json_value),
     }
 }
 
-/// Deserialize TOON format directly to any Rust type that implements `Deserialize`.
+/// Deserialize TOON format directly to any Rust type that implements
+/// `Deserialize`.
 ///
-/// This function decodes TOON to JSON first, then deserializes it to the target type.
-/// You can optionally provide custom decoding options to control parsing behavior.
+/// This function decodes TOON to JSON first, then deserializes it to the target
+/// type. You can optionally provide custom decoding options to control parsing
+/// behavior.
 ///
 /// # Arguments
 ///
 /// * `s` - The TOON string to deserialize
-/// * `options` - Optional decoding options. If `None`, uses default options (strict mode enabled).
+/// * `options` - Optional decoding options. If `None`, uses default options
+///   (strict mode enabled).
 ///
 /// # Examples
 ///
@@ -155,7 +161,7 @@ pub fn to_toon<T: Serialize>(
 /// }
 ///
 /// let toon = "name: Alice\nage: 30";
-/// 
+///
 /// // Use default options (strict mode)
 /// let user: User = rtoon::from_toon(toon, None)?;
 /// assert_eq!(user.name, "Alice");
@@ -175,7 +181,7 @@ pub fn to_toon<T: Serialize>(
 /// }
 ///
 /// let toon = "tags[3]: reading,gaming,coding";
-/// 
+///
 /// let options = DecodeOptions::new()
 ///     .with_strict(false)
 ///     .with_coerce_types(true);
@@ -188,7 +194,10 @@ pub fn to_toon<T: Serialize>(
 /// ## Round-trip conversion
 ///
 /// ```
-/// use serde::{Serialize, Deserialize};
+/// use serde::{
+///     Deserialize,
+///     Serialize,
+/// };
 ///
 /// #[derive(Serialize, Deserialize, Debug, PartialEq)]
 /// struct Config {
@@ -214,11 +223,10 @@ pub fn from_toon<T: for<'de> Deserialize<'de>>(
         Some(opts) => decode(s, opts)?,
         None => decode_default(s)?,
     };
-    
+
     serde_json::from_value(json_value)
         .map_err(|e| ToonError::InvalidInput(format!("Deserialization error: {}", e)))
 }
-
 
 #[cfg(test)]
 mod tests {
