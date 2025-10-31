@@ -283,7 +283,18 @@ fn encode_nested_array(
                     writer.write_key(first_key)?;
                     writer.write_char(':')?;
                     writer.write_char(' ')?;
-                    write_primitive_value(writer, first_val)?;
+                    match first_val {
+                        Value::Array(arr) => {
+                            write_array(writer, None, arr, depth + 1)?;
+                        }
+                        Value::Object(nested_obj) => {
+                            writer.write_newline()?;
+                            write_object(writer, nested_obj, depth + 2)?;
+                        }
+                        _ => {
+                            write_primitive_value(writer, first_val)?;
+                        }
+                    }
 
                     for key in keys.iter().skip(1) {
                         writer.write_newline()?;

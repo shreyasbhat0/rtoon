@@ -5,7 +5,10 @@ use serde_json::{
 };
 
 use crate::{
-    constants::MAX_DEPTH,
+    constants::{
+        KEYWORDS,
+        MAX_DEPTH,
+    },
     decode::{
         scanner::{
             Scanner,
@@ -76,25 +79,57 @@ impl<'a> Parser<'a> {
 
         match &self.current_token {
             Token::Null => {
-                self.advance()?;
-                Ok(Value::Null)
+                let next_char_is_colon = matches!(self.scanner.peek(), Some(':'));
+                if next_char_is_colon {
+                    let key = KEYWORDS[0].to_string();
+                    self.advance()?;
+                    self.parse_object_with_initial_key(key, depth)
+                } else {
+                    self.advance()?;
+                    Ok(Value::Null)
+                }
             }
             Token::Bool(b) => {
-                let val = *b;
-                self.advance()?;
-                Ok(Value::Bool(val))
+                let next_char_is_colon = matches!(self.scanner.peek(), Some(':'));
+                if next_char_is_colon {
+                    let key = if *b {
+                        KEYWORDS[1].to_string()
+                    } else {
+                        KEYWORDS[2].to_string()
+                    };
+                    self.advance()?;
+                    self.parse_object_with_initial_key(key, depth)
+                } else {
+                    let val = *b;
+                    self.advance()?;
+                    Ok(Value::Bool(val))
+                }
             }
             Token::Integer(i) => {
-                let val = *i;
-                self.advance()?;
-                Ok(serde_json::Number::from(val).into())
+                let next_char_is_colon = matches!(self.scanner.peek(), Some(':'));
+                if next_char_is_colon {
+                    let key = i.to_string();
+                    self.advance()?;
+                    self.parse_object_with_initial_key(key, depth)
+                } else {
+                    let val = *i;
+                    self.advance()?;
+                    Ok(serde_json::Number::from(val).into())
+                }
             }
             Token::Number(n) => {
-                let val = *n;
-                self.advance()?;
-                Ok(serde_json::Number::from_f64(val)
-                    .ok_or_else(|| ToonError::InvalidInput(format!("Invalid number: {}", val)))?
-                    .into())
+                let next_char_is_colon = matches!(self.scanner.peek(), Some(':'));
+                if next_char_is_colon {
+                    let key = n.to_string();
+                    self.advance()?;
+                    self.parse_object_with_initial_key(key, depth)
+                } else {
+                    let val = *n;
+                    self.advance()?;
+                    Ok(serde_json::Number::from_f64(val)
+                        .ok_or_else(|| ToonError::InvalidInput(format!("Invalid number: {}", val)))?
+                        .into())
+                }
             }
             Token::String(s, _) => {
                 let first = s.clone();

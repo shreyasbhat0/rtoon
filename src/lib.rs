@@ -36,6 +36,7 @@ pub use utils::{
     normalize,
     string::{
         escape_string,
+        is_valid_unquoted_key,
         needs_quoting,
     },
 };

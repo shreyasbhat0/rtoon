@@ -6,6 +6,7 @@ use crate::{
         EncodeOptions,
     },
     utils::string::{
+        is_valid_unquoted_key,
         needs_quoting,
         quote_string,
     },
@@ -55,10 +56,10 @@ impl Writer {
     }
 
     pub fn write_key(&mut self, key: &str) -> ToonResult<()> {
-        if self.needs_quoting(key) {
-            self.write_quoted_string(key)
-        } else {
+        if is_valid_unquoted_key(key) {
             self.write_str(key)
+        } else {
+            self.write_quoted_string(key)
         }
     }
 

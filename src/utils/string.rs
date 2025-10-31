@@ -49,6 +49,24 @@ pub fn unescape_string(s: &str) -> String {
     result
 }
 
+pub fn is_valid_unquoted_key(key: &str) -> bool {
+    if key.is_empty() {
+        return false;
+    }
+
+    let mut chars = key.chars();
+    let first = match chars.next() {
+        Some(c) => c,
+        None => return false,
+    };
+
+    if !first.is_alphabetic() && first != '_' {
+        return false;
+    }
+
+    chars.all(|c| c.is_alphanumeric() || c == '_' || c == '.')
+}
+
 pub fn needs_quoting(s: &str, delimiter: Delimiter) -> bool {
     if s.is_empty() {
         return true;
@@ -172,5 +190,31 @@ mod tests {
         assert_eq!(split_by_delimiter("a, b, c", comma), vec!["a", "b", "c"]);
 
         assert_eq!(split_by_delimiter("\"a,b\",c", comma), vec!["\"a,b\"", "c"]);
+    }
+
+    #[test]
+    fn test_is_valid_unquoted_key() {
+        // Valid keys (should return true)
+        assert!(is_valid_unquoted_key("normal_key"));
+        assert!(is_valid_unquoted_key("key123"));
+        assert!(is_valid_unquoted_key("key.value"));
+        assert!(is_valid_unquoted_key("_private"));
+        assert!(is_valid_unquoted_key("KeyName"));
+        assert!(is_valid_unquoted_key("key_name"));
+        assert!(is_valid_unquoted_key("key.name.sub"));
+        assert!(is_valid_unquoted_key("a"));
+        assert!(is_valid_unquoted_key("_"));
+        assert!(is_valid_unquoted_key("key_123.value"));
+
+        assert!(!is_valid_unquoted_key(""));
+        assert!(!is_valid_unquoted_key("123"));
+        assert!(!is_valid_unquoted_key("key:value"));
+        assert!(!is_valid_unquoted_key("key-value"));
+        assert!(!is_valid_unquoted_key("key value"));
+        assert!(!is_valid_unquoted_key(".key"));
+        assert!(is_valid_unquoted_key("key.value.sub."));
+        assert!(is_valid_unquoted_key("key."));
+        assert!(!is_valid_unquoted_key("key[value]"));
+        assert!(!is_valid_unquoted_key("key{value}"));
     }
 }

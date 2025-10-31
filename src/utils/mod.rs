@@ -15,6 +15,7 @@ use serde_json::{
 };
 pub use string::{
     escape_string,
+    is_valid_unquoted_key,
     needs_quoting,
     quote_string,
     unescape_string,
