@@ -5,6 +5,7 @@ use crate::error::{
     ToonResult,
 };
 
+/// Validate that nesting depth doesn't exceed the maximum.
 pub fn validate_depth(depth: usize, max_depth: usize) -> ToonResult<()> {
     if depth > max_depth {
         return Err(ToonError::InvalidStructure(format!(
@@ -15,6 +16,7 @@ pub fn validate_depth(depth: usize, max_depth: usize) -> ToonResult<()> {
     Ok(())
 }
 
+/// Validate that a field name is not empty.
 pub fn validate_field_name(name: &str) -> ToonResult<()> {
     if name.is_empty() {
         return Err(ToonError::InvalidInput(
@@ -24,6 +26,7 @@ pub fn validate_field_name(name: &str) -> ToonResult<()> {
     Ok(())
 }
 
+/// Recursively validate a JSON value and all nested fields.
 pub fn validate_value(value: &Value) -> ToonResult<()> {
     match value {
         Value::Object(obj) => {

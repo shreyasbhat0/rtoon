@@ -12,12 +12,14 @@ use crate::{
     },
 };
 
+/// Writer that builds TOON output string from JSON values.
 pub struct Writer {
     buffer: String,
     options: EncodeOptions,
 }
 
 impl Writer {
+    /// Create a new writer with the given options.
     pub fn new(options: EncodeOptions) -> Self {
         Self {
             buffer: String::new(),
@@ -25,6 +27,7 @@ impl Writer {
         }
     }
 
+    /// Finish writing and return the complete TOON string.
     pub fn finish(self) -> String {
         self.buffer
     }
@@ -63,6 +66,7 @@ impl Writer {
         }
     }
 
+    /// Write an array header with key, length, and optional field list.
     pub fn write_array_header(
         &mut self,
         key: Option<&str>,
@@ -102,6 +106,7 @@ impl Writer {
         self.write_char(':')
     }
 
+    /// Write an empty array header.
     pub fn write_empty_array_with_key(&mut self, key: Option<&str>) -> ToonResult<()> {
         if let Some(k) = key {
             self.write_key(k)?;

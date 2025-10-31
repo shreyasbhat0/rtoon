@@ -1,5 +1,6 @@
 use crate::constants;
 
+/// Check if a string looks like a keyword or number (needs quoting).
 pub fn is_literal_like(s: &str) -> bool {
     is_keyword(s) || is_numeric_like(s)
 }
@@ -14,6 +15,7 @@ pub fn is_structural_char(ch: char) -> bool {
     constants::is_structural_char(ch)
 }
 
+/// Check if a string looks like a number (starts with digit, no leading zeros).
 pub fn is_numeric_like(s: &str) -> bool {
     if s.is_empty() {
         return false;

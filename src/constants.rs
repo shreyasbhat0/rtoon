@@ -1,13 +1,18 @@
 use crate::types::Delimiter;
 
+/// Characters that have structural meaning in TOON format.
 pub const STRUCTURAL_CHARS: &[char] = &['[', ']', '{', '}', ':', '-'];
 
+/// TOON keywords that must be quoted when used as strings.
 pub const KEYWORDS: &[&str] = &["null", "true", "false"];
 
+/// Default indentation size (2 spaces).
 pub const DEFAULT_INDENT: usize = 2;
 
+/// Default delimiter (comma).
 pub const DEFAULT_DELIMITER: Delimiter = Delimiter::Comma;
 
+/// Maximum nesting depth to prevent stack overflow.
 pub const MAX_DEPTH: usize = 256;
 
 #[inline]

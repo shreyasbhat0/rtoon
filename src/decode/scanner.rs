@@ -6,6 +6,7 @@ use crate::{
     types::Delimiter,
 };
 
+/// Tokens produced by the scanner during lexical analysis.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     LeftBracket,
@@ -24,6 +25,7 @@ pub enum Token {
     Eof,
 }
 
+/// Scanner that tokenizes TOON input into a sequence of tokens.
 pub struct Scanner {
     input: Vec<char>,
     position: usize,
@@ -34,6 +36,7 @@ pub struct Scanner {
 }
 
 impl Scanner {
+    /// Create a new scanner for the given input string.
     pub fn new(input: &str) -> Self {
         Self {
             input: input.chars().collect(),
@@ -45,10 +48,12 @@ impl Scanner {
         }
     }
 
+    /// Set the active delimiter for tokenizing array elements.
     pub fn set_active_delimiter(&mut self, delimiter: Option<Delimiter>) {
         self.active_delimiter = delimiter;
     }
 
+    /// Get the current position (line, column).
     pub fn current_position(&self) -> (usize, usize) {
         (self.line, self.column)
     }
@@ -126,6 +131,7 @@ impl Scanner {
         }
     }
 
+    /// Scan the next token from the input.
     pub fn scan_token(&mut self) -> ToonResult<Token> {
         if self.column == 1 {
             let mut count = 0;
@@ -171,6 +177,7 @@ impl Scanner {
             }
             Some('-') => {
                 self.advance();
+                // Check if '-' is part of a negative number
                 if let Some(ch) = self.peek() {
                     if ch.is_ascii_digit() {
                         let num_str = self.scan_number_string(true)?;
@@ -323,6 +330,7 @@ impl Scanner {
         }
     }
 
+    /// Detect the delimiter used in the input by scanning ahead.
     pub fn detect_delimiter(&mut self) -> Option<Delimiter> {
         let saved_pos = self.position;
 

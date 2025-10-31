@@ -1,3 +1,20 @@
+//! # RToon
+//!
+//! A Rust implementation of TOON (Token-Oriented Object Notation), a compact
+//! format for structured data optimized for LLM token efficiency.
+//!
+//! # Examples
+//!
+//! ```
+//! use rtoon::{encode_default, decode_default};
+//! use serde_json::json;
+//!
+//! let data = json!({"name": "Alice", "age": 30});
+//! let encoded = encode_default(&data)?;
+//! let decoded = decode_default(&encoded)?;
+//! # Ok::<(), rtoon::ToonError>(())
+//! ```
+
 pub mod constants;
 pub mod decode;
 pub mod encode;

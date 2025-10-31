@@ -3,6 +3,7 @@ use crate::error::{
     ToonResult,
 };
 
+/// Validate that array length matches expected value (strict mode only).
 pub fn validate_array_length(expected: usize, actual: usize, strict: bool) -> ToonResult<()> {
     if strict && expected != actual {
         return Err(ToonError::length_mismatch(expected, actual));
@@ -10,6 +11,7 @@ pub fn validate_array_length(expected: usize, actual: usize, strict: bool) -> To
     Ok(())
 }
 
+/// Validate field list for tabular arrays (no duplicates, non-empty names).
 pub fn validate_field_list(fields: &[String]) -> ToonResult<()> {
     if fields.is_empty() {
         return Err(ToonError::InvalidInput(
@@ -39,6 +41,7 @@ pub fn validate_field_list(fields: &[String]) -> ToonResult<()> {
     Ok(())
 }
 
+/// Validate that a tabular row has the expected number of values.
 pub fn validate_row_length(
     row_index: usize,
     expected_fields: usize,
@@ -53,6 +56,7 @@ pub fn validate_row_length(
     Ok(())
 }
 
+/// Validate that detected and expected delimiters match.
 pub fn validate_delimiter_consistency(
     detected: Option<crate::types::Delimiter>,
     expected: Option<crate::types::Delimiter>,

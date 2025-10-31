@@ -1,7 +1,9 @@
 use thiserror::Error;
 
+/// Result type alias for TOON operations.
 pub type ToonResult<T> = std::result::Result<T, ToonError>;
 
+/// Errors that can occur during TOON encoding or decoding.
 #[derive(Error, Debug, Clone, PartialEq)]
 pub enum ToonError {
     #[error("Invalid input: {0}")]
@@ -46,6 +48,8 @@ pub enum ToonError {
     DeserializationError(String),
 }
 
+/// Contextual information for error reporting, including source location
+/// and suggestions.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ErrorContext {
     pub source_line: String,
@@ -84,6 +88,7 @@ impl std::fmt::Display for ErrorContext {
 impl std::error::Error for ErrorContext {}
 
 impl ErrorContext {
+    /// Create a new error context with a source line.
     pub fn new(source_line: impl Into<String>) -> Self {
         Self {
             source_line: source_line.into(),
@@ -94,27 +99,33 @@ impl ErrorContext {
         }
     }
 
+    /// Add preceding context lines.
     pub fn with_preceding_lines(mut self, lines: Vec<String>) -> Self {
         self.preceding_lines = lines;
         self
     }
 
+    /// Add following context lines.
     pub fn with_following_lines(mut self, lines: Vec<String>) -> Self {
         self.following_lines = lines;
         self
     }
 
+    /// Add a suggestion message to help fix the error.
     pub fn with_suggestion(mut self, suggestion: impl Into<String>) -> Self {
         self.suggestion = Some(suggestion.into());
         self
     }
 
+    /// Add a column indicator (caret) pointing to the error position.
     pub fn with_indicator(mut self, column: usize) -> Self {
         let indicator = format!("{}^", " ".repeat(column));
         self.indicator = Some(indicator);
         self
     }
 
+    /// Create error context from input string with automatic context
+    /// extraction.
     pub fn from_input(
         input: &str,
         line: usize,
@@ -154,6 +165,7 @@ impl ErrorContext {
 }
 
 impl ToonError {
+    /// Create a parse error at the given position.
     pub fn parse_error(line: usize, column: usize, message: impl Into<String>) -> Self {
         ToonError::ParseError {
             line,
@@ -163,6 +175,7 @@ impl ToonError {
         }
     }
 
+    /// Create a parse error with additional context information.
     pub fn parse_error_with_context(
         line: usize,
         column: usize,
@@ -177,10 +190,12 @@ impl ToonError {
         }
     }
 
+    /// Create an error for an invalid character.
     pub fn invalid_char(char: char, position: usize) -> Self {
         ToonError::InvalidCharacter { char, position }
     }
 
+    /// Create an error for a type mismatch.
     pub fn type_mismatch(expected: impl Into<String>, found: impl Into<String>) -> Self {
         ToonError::TypeMismatch {
             expected: expected.into(),
@@ -188,6 +203,7 @@ impl ToonError {
         }
     }
 
+    /// Create an error for array length mismatch.
     pub fn length_mismatch(expected: usize, found: usize) -> Self {
         ToonError::LengthMismatch {
             expected,
@@ -196,6 +212,7 @@ impl ToonError {
         }
     }
 
+    /// Create an array length mismatch error with context.
     pub fn length_mismatch_with_context(
         expected: usize,
         found: usize,
@@ -208,6 +225,7 @@ impl ToonError {
         }
     }
 
+    /// Add context to an error if it supports it.
     pub fn with_context(self, context: ErrorContext) -> Self {
         match self {
             ToonError::ParseError {
@@ -232,6 +250,7 @@ impl ToonError {
         }
     }
 
+    /// Add a suggestion to help fix the error.
     pub fn with_suggestion(self, suggestion: impl Into<String>) -> Self {
         let suggestion = suggestion.into();
         match self {

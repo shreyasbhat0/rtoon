@@ -28,6 +28,7 @@ use crate::{
     utils::validation::validate_depth,
 };
 
+/// Parser that builds JSON values from a sequence of tokens.
 pub struct Parser<'a> {
     scanner: Scanner,
     current_token: Token,
@@ -37,6 +38,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
+    /// Create a new parser with the given input and options.
     pub fn new(input: &'a str, options: DecodeOptions) -> Self {
         let mut scanner = Scanner::new(input);
         let chosen_delim = options.delimiter;
@@ -52,6 +54,7 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /// Parse the input into a JSON value.
     pub fn parse(&mut self) -> ToonResult<Value> {
         self.parse_value()
     }
@@ -79,6 +82,7 @@ impl<'a> Parser<'a> {
 
         match &self.current_token {
             Token::Null => {
+                // "null:" indicates "null" is a key, not a value
                 let next_char_is_colon = matches!(self.scanner.peek(), Some(':'));
                 if next_char_is_colon {
                     let key = KEYWORDS[0].to_string();
@@ -140,6 +144,8 @@ impl<'a> Parser<'a> {
                         self.parse_object_with_initial_key(first, depth)
                     }
                     _ => {
+                        // Accumulate consecutive strings with spaces (e.g., "hello" "world" ->
+                        // "hello world")
                         let mut accumulated = first;
                         loop {
                             match &self.current_token {

@@ -16,6 +16,20 @@ use crate::{
     },
 };
 
+/// Encode a JSON value to TOON format with custom options.
+///
+/// # Examples
+///
+/// ```
+/// use rtoon::{encode, EncodeOptions, Delimiter};
+/// use serde_json::json;
+///
+/// let data = json!({"tags": ["a", "b", "c"]});
+/// let options = EncodeOptions::new().with_delimiter(Delimiter::Pipe);
+/// let toon = encode(&data, &options)?;
+/// assert!(toon.contains("|"));
+/// # Ok::<(), rtoon::ToonError>(())
+/// ```
 pub fn encode(value: &Value, options: &EncodeOptions) -> ToonResult<String> {
     let normalized = normalize(value.clone());
     let mut writer = writer::Writer::new(options.clone());
@@ -35,10 +49,56 @@ pub fn encode(value: &Value, options: &EncodeOptions) -> ToonResult<String> {
     Ok(writer.finish())
 }
 
+/// Encode a JSON value to TOON format with default options.
+///
+/// # Examples
+///
+/// ```
+/// use rtoon::encode_default;
+/// use serde_json::json;
+///
+/// // Simple object
+/// let data = json!({"name": "Alice", "age": 30});
+/// let toon = encode_default(&data)?;
+/// assert!(toon.contains("name: Alice"));
+/// assert!(toon.contains("age: 30"));
+///
+/// // Primitive array
+/// let data = json!({"tags": ["reading", "gaming", "coding"]});
+/// let toon = encode_default(&data)?;
+/// assert_eq!(toon, "tags[3]: reading,gaming,coding");
+///
+/// // Tabular array
+/// let data = json!({
+///     "users": [
+///         {"id": 1, "name": "Alice"},
+///         {"id": 2, "name": "Bob"}
+///     ]
+/// });
+/// let toon = encode_default(&data)?;
+/// assert!(toon.contains("users[2]{id,name}:"));
+/// # Ok::<(), rtoon::ToonError>(())
+/// ```
 pub fn encode_default(value: &Value) -> ToonResult<String> {
     encode(value, &EncodeOptions::default())
 }
 
+/// Encode a JSON object to TOON format (errors if not an object).
+///
+/// # Examples
+///
+/// ```
+/// use rtoon::{encode_object, EncodeOptions};
+/// use serde_json::json;
+///
+/// let data = json!({"name": "Alice", "age": 30});
+/// let toon = encode_object(&data, &EncodeOptions::default())?;
+/// assert!(toon.contains("name: Alice"));
+///
+/// // Will error if not an object
+/// assert!(encode_object(&json!(42), &EncodeOptions::default()).is_err());
+/// # Ok::<(), rtoon::ToonError>(())
+/// ```
 pub fn encode_object(value: &Value, options: &EncodeOptions) -> ToonResult<String> {
     if !value.is_object() {
         return Err(ToonError::TypeMismatch {
@@ -49,6 +109,22 @@ pub fn encode_object(value: &Value, options: &EncodeOptions) -> ToonResult<Strin
     encode(value, options)
 }
 
+/// Encode a JSON array to TOON format (errors if not an array).
+///
+/// # Examples
+///
+/// ```
+/// use rtoon::{encode_array, EncodeOptions};
+/// use serde_json::json;
+///
+/// let data = json!(["a", "b", "c"]);
+/// let toon = encode_array(&data, &EncodeOptions::default())?;
+/// assert_eq!(toon, "[3]: a,b,c");
+///
+/// // Will error if not an array
+/// assert!(encode_array(&json!({"key": "value"}), &EncodeOptions::default()).is_err());
+/// # Ok::<(), rtoon::ToonError>(())
+/// ```
 pub fn encode_array(value: &Value, options: &EncodeOptions) -> ToonResult<String> {
     if !value.is_array() {
         return Err(ToonError::TypeMismatch {
@@ -125,6 +201,7 @@ fn write_array(
         return Ok(());
     }
 
+    // Choose encoding format: tabular > primitive inline > nested list
     if let Some(keys) = is_tabular_array(arr) {
         encode_tabular_array(writer, key, arr, &keys, depth)?;
     } else if is_primitive_array(arr) {
@@ -136,6 +213,8 @@ fn write_array(
     Ok(())
 }
 
+/// Check if an array can be encoded as tabular format (uniform objects with
+/// primitive values).
 fn is_tabular_array(arr: &[Value]) -> Option<Vec<String>> {
     if arr.is_empty() {
         return None;
@@ -149,12 +228,14 @@ fn is_tabular_array(arr: &[Value]) -> Option<Vec<String>> {
     let first_obj = first.as_object()?;
     let keys: Vec<String> = first_obj.keys().cloned().collect();
 
+    // All values must be primitives for tabular format
     for value in first_obj.values() {
         if !is_primitive(value) {
             return None;
         }
     }
 
+    // All objects must have the same keys and primitive values
     for val in arr.iter().skip(1) {
         if let Some(obj) = val.as_object() {
             let obj_keys: Vec<String> = obj.keys().cloned().collect();
@@ -174,6 +255,7 @@ fn is_tabular_array(arr: &[Value]) -> Option<Vec<String>> {
     Some(keys)
 }
 
+/// Check if a value is a primitive (not array or object).
 fn is_primitive(value: &Value) -> bool {
     matches!(
         value,
@@ -181,6 +263,7 @@ fn is_primitive(value: &Value) -> bool {
     )
 }
 
+/// Check if all array elements are primitives.
 fn is_primitive_array(arr: &[Value]) -> bool {
     arr.iter().all(is_primitive)
 }

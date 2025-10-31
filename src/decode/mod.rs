@@ -9,29 +9,104 @@ use crate::{
     types::DecodeOptions,
 };
 
+/// Decode a TOON string to a JSON value with custom options.
+///
+/// # Examples
+///
+/// ```
+/// use rtoon::{decode, DecodeOptions, Delimiter};
+/// use serde_json::json;
+///
+/// let input = "name: Alice\nage: 30";
+/// let options = DecodeOptions::new().with_strict(false);
+/// let result = decode(input, &options)?;
+/// assert_eq!(result["name"], json!("Alice"));
+/// # Ok::<(), rtoon::ToonError>(())
+/// ```
 pub fn decode(input: &str, options: &DecodeOptions) -> ToonResult<Value> {
     let mut parser = parser::Parser::new(input, options.clone());
     parser.parse()
 }
 
+/// Decode with strict validation enabled (validates array lengths,
+/// indentation).
+///
+/// # Examples
+///
+/// ```
+/// use rtoon::decode_strict;
+/// use serde_json::json;
+///
+/// // Valid array length
+/// let result = decode_strict("items[2]: a,b")?;
+/// assert_eq!(result["items"], json!(["a", "b"]));
+///
+/// // Invalid array length (will error)
+/// assert!(decode_strict("items[3]: a,b").is_err());
+/// # Ok::<(), rtoon::ToonError>(())
+/// ```
 pub fn decode_strict(input: &str) -> ToonResult<Value> {
     decode(input, &DecodeOptions::new().with_strict(true))
 }
 
+/// Decode with strict validation and additional options.
 pub fn decode_strict_with_options(input: &str, options: &DecodeOptions) -> ToonResult<Value> {
     let opts = options.clone().with_strict(true);
     decode(input, &opts)
 }
 
+/// Decode without type coercion (strings remain strings).
+///
+/// # Examples
+///
+/// ```
+/// use rtoon::decode_no_coerce;
+/// use serde_json::json;
+///
+/// // Without coercion: quoted strings that look like numbers stay as strings
+/// let result = decode_no_coerce("value: \"123\"")?;
+/// assert_eq!(result["value"], json!("123"));
+///
+/// // With default coercion: unquoted "true" becomes boolean
+/// let result = rtoon::decode_default("value: true")?;
+/// assert_eq!(result["value"], json!(true));
+/// # Ok::<(), rtoon::ToonError>(())
+/// ```
 pub fn decode_no_coerce(input: &str) -> ToonResult<Value> {
     decode(input, &DecodeOptions::new().with_coerce_types(false))
 }
 
+/// Decode without type coercion and with additional options.
 pub fn decode_no_coerce_with_options(input: &str, options: &DecodeOptions) -> ToonResult<Value> {
     let opts = options.clone().with_coerce_types(false);
     decode(input, &opts)
 }
 
+/// Decode with default options (strict mode, type coercion enabled).
+///
+/// # Examples
+///
+/// ```
+/// use rtoon::decode_default;
+/// use serde_json::json;
+///
+/// // Simple object
+/// let input = "name: Alice\nage: 30";
+/// let result = decode_default(input)?;
+/// assert_eq!(result["name"], json!("Alice"));
+/// assert_eq!(result["age"], json!(30));
+///
+/// // Primitive array
+/// let input = "tags[3]: reading,gaming,coding";
+/// let result = decode_default(input)?;
+/// assert_eq!(result["tags"], json!(["reading", "gaming", "coding"]));
+///
+/// // Tabular array
+/// let input = "users[2]{id,name}:\n  1,Alice\n  2,Bob";
+/// let result = decode_default(input)?;
+/// assert_eq!(result["users"][0]["name"], json!("Alice"));
+/// # Ok::<(), rtoon::ToonError>(())
+/// ```
 pub fn decode_default(input: &str) -> ToonResult<Value> {
     decode(input, &DecodeOptions::default())
 }

@@ -21,6 +21,7 @@ pub use string::{
     unescape_string,
 };
 
+/// Context for determining when quoting is needed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum QuotingContext {
     Key,
@@ -28,6 +29,7 @@ pub enum QuotingContext {
     Header,
 }
 
+/// Normalize a JSON value (converts NaN/Infinity to null, -0 to 0).
 pub fn normalize(value: Value) -> Value {
     match value {
         Value::Number(n) => {

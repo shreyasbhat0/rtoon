@@ -3,6 +3,7 @@ use crate::{
     utils::literal,
 };
 
+/// Escape special characters in a string for quoted output.
 pub fn escape_string(s: &str) -> String {
     let mut result = String::with_capacity(s.len());
 
@@ -20,6 +21,7 @@ pub fn escape_string(s: &str) -> String {
     result
 }
 
+/// Unescape special characters in a quoted string.
 pub fn unescape_string(s: &str) -> String {
     let mut result = String::with_capacity(s.len());
     let mut chars = s.chars();
@@ -49,6 +51,8 @@ pub fn unescape_string(s: &str) -> String {
     result
 }
 
+/// Check if a key can be written without quotes (alphanumeric, underscore,
+/// dot).
 pub fn is_valid_unquoted_key(key: &str) -> bool {
     if key.is_empty() {
         return false;
@@ -67,6 +71,7 @@ pub fn is_valid_unquoted_key(key: &str) -> bool {
     chars.all(|c| c.is_alphanumeric() || c == '_' || c == '.')
 }
 
+/// Determine if a string needs quoting based on content and delimiter.
 pub fn needs_quoting(s: &str, delimiter: Delimiter) -> bool {
     if s.is_empty() {
         return true;
@@ -99,6 +104,7 @@ pub fn needs_quoting(s: &str, delimiter: Delimiter) -> bool {
     false
 }
 
+/// Quote and escape a string.
 pub fn quote_string(s: &str) -> String {
     format!("\"{}\"", escape_string(s))
 }
