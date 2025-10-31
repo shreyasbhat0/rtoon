@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-## [Unreleased]
+## [v0.1.2] - 2025-10-31
 
 
 ### Changed
@@ -13,6 +13,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update readme [b36ad31]
 
 - Add code documentation [d338256]
+
+- Add changelogs [cc51743]
+
+- Bump release version [a886186]
+
+
+
+### Fixed
+
+
+- Realse ci [ad8e60e]
+
+- Release workflow [6ee001e]
+
+- Changelog update via ci run [fe51790]
 
 
 ## [v0.1.1] - 2025-10-31
