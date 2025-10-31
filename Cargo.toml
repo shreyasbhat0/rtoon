@@ -1,6 +1,6 @@
 [package]
 name = "rtoon"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 authors = ["Shreyas K S <ks.shreyas0@gmail.com>"]
 license = "MIT"
