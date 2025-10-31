@@ -613,8 +613,6 @@ MIT © 2025
 ## See Also
 
 - **Original JavaScript/TypeScript implementation:** [@byjohann/toon](https://github.com/johannschopplich/toon)
-- **Go implementation:** [gotoon](https://github.com/alpkeskin/gotoon) by [@alpkeskin](https://github.com/alpkeskin)
-
 ---
 
 <div align="center">
