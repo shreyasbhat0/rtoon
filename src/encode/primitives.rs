@@ -31,8 +31,9 @@ pub fn normalize_value(value: serde_json::Value) -> serde_json::Value {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn test_is_primitive() {
