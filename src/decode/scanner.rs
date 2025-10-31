@@ -1,5 +1,10 @@
-use crate::error::{ToonResult, ToonError};
-use crate::types::Delimiter;
+use crate::{
+    error::{
+        ToonError,
+        ToonResult,
+    },
+    types::Delimiter,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
@@ -10,7 +15,7 @@ pub enum Token {
     Colon,
     Dash,
     Newline,
-    String(String),
+    String(String, bool),
     Number(f64),
     Integer(i64),
     Bool(bool),
@@ -48,6 +53,14 @@ impl Scanner {
         (self.line, self.column)
     }
 
+    pub fn get_line(&self) -> usize {
+        self.line
+    }
+
+    pub fn get_column(&self) -> usize {
+        self.column
+    }
+
     pub fn peek(&self) -> Option<char> {
         self.input.get(self.position).copied()
     }
@@ -66,7 +79,6 @@ impl Scanner {
         count
     }
 
-    /// If the current character is a newline, count spaces immediately after it (without advancing)
     pub fn count_spaces_after_newline(&self) -> usize {
         let mut idx = self.position;
         if self.input.get(idx) != Some(&'\n') {
@@ -223,7 +235,7 @@ impl Scanner {
             } else if ch == '\\' {
                 escaped = true;
             } else if ch == '"' {
-                return Ok(Token::String(value));
+                return Ok(Token::String(value, true));
             } else {
                 value.push(ch);
             }
@@ -269,7 +281,7 @@ impl Scanner {
             "null" => Ok(Token::Null),
             "true" => Ok(Token::Bool(true)),
             "false" => Ok(Token::Bool(false)),
-            _ => Ok(Token::String(value)),
+            _ => Ok(Token::String(value, false)),
         }
     }
 
@@ -302,12 +314,12 @@ impl Scanner {
             if let Ok(f) = s.parse::<f64>() {
                 Ok(Token::Number(f))
             } else {
-                Ok(Token::String(s.to_string()))
+                Ok(Token::String(s.to_string(), false))
             }
         } else if let Ok(i) = s.parse::<i64>() {
             Ok(Token::Integer(i))
         } else {
-            Ok(Token::String(s.to_string()))
+            Ok(Token::String(s.to_string(), false))
         }
     }
 
@@ -381,7 +393,7 @@ mod tests {
         let mut scanner = Scanner::new(r#""hello world""#);
         assert_eq!(
             scanner.scan_token().unwrap(),
-            Token::String("hello world".to_string())
+            Token::String("hello world".to_string(), true)
         );
     }
 
@@ -390,7 +402,7 @@ mod tests {
         let mut scanner = Scanner::new(r#""hello\nworld""#);
         assert_eq!(
             scanner.scan_token().unwrap(),
-            Token::String("hello\nworld".to_string())
+            Token::String("hello\nworld".to_string(), true)
         );
     }
 
@@ -399,7 +411,7 @@ mod tests {
         let mut scanner = Scanner::new("hello");
         assert_eq!(
             scanner.scan_token().unwrap(),
-            Token::String("hello".to_string())
+            Token::String("hello".to_string(), false)
         );
     }
 

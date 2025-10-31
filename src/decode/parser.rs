@@ -1,23 +1,52 @@
-use crate::decode::scanner::{Scanner, Token};
-use crate::error::{ToonResult, ToonError};
-use crate::types::{DecodeOptions, Delimiter};
-use serde_json::{Map, Value};
+use serde_json::{
+    Map,
+    Number,
+    Value,
+};
 
-pub struct Parser {
+use crate::{
+    constants::MAX_DEPTH,
+    decode::{
+        scanner::{
+            Scanner,
+            Token,
+        },
+        validation,
+    },
+    error::{
+        ErrorContext,
+        ToonError,
+        ToonResult,
+    },
+    types::{
+        DecodeOptions,
+        Delimiter,
+    },
+    utils::validation::validate_depth,
+};
+
+pub struct Parser<'a> {
     scanner: Scanner,
     current_token: Token,
-    _options: DecodeOptions,
+    options: DecodeOptions,
     delimiter: Option<Delimiter>,
+    input: &'a str,
 }
 
-impl Parser {
-    pub fn new(input: &str, options: DecodeOptions) -> Self {
+impl<'a> Parser<'a> {
+    pub fn new(input: &'a str, options: DecodeOptions) -> Self {
         let mut scanner = Scanner::new(input);
         let chosen_delim = options.delimiter;
         scanner.set_active_delimiter(chosen_delim);
         let current_token = scanner.scan_token().unwrap_or(Token::Eof);
 
-        Self { scanner, current_token, delimiter: chosen_delim, _options: options }
+        Self {
+            scanner,
+            current_token,
+            delimiter: chosen_delim,
+            options,
+            input,
+        }
     }
 
     pub fn parse(&mut self) -> ToonResult<Value> {
@@ -37,6 +66,12 @@ impl Parser {
     }
 
     fn parse_value(&mut self) -> ToonResult<Value> {
+        self.parse_value_with_depth(0)
+    }
+
+    fn parse_value_with_depth(&mut self, depth: usize) -> ToonResult<Value> {
+        validate_depth(depth, MAX_DEPTH)?;
+
         self.skip_newlines()?;
 
         match &self.current_token {
@@ -58,23 +93,25 @@ impl Parser {
                 let val = *n;
                 self.advance()?;
                 Ok(serde_json::Number::from_f64(val)
-                    .ok_or_else(|| {
-                        ToonError::InvalidInput(format!("Invalid number: {}", val))
-                    })?
+                    .ok_or_else(|| ToonError::InvalidInput(format!("Invalid number: {}", val)))?
                     .into())
             }
-            Token::String(s) => {
+            Token::String(s, _) => {
                 let first = s.clone();
                 self.advance()?;
 
                 match &self.current_token {
-                    Token::Colon | Token::LeftBracket => self.parse_object_with_initial_key(first),
+                    Token::Colon | Token::LeftBracket => {
+                        self.parse_object_with_initial_key(first, depth)
+                    }
                     _ => {
                         let mut accumulated = first;
                         loop {
                             match &self.current_token {
-                                Token::String(next) => {
-                                    if !accumulated.is_empty() { accumulated.push(' '); }
+                                Token::String(next, _) => {
+                                    if !accumulated.is_empty() {
+                                        accumulated.push(' ');
+                                    }
                                     accumulated.push_str(next);
                                     self.advance()?;
                                 }
@@ -85,13 +122,15 @@ impl Parser {
                     }
                 }
             }
-            Token::LeftBracket => self.parse_root_array(),
+            Token::LeftBracket => self.parse_root_array(depth),
             Token::Eof => Ok(Value::Null),
-            _ => self.parse_object(),
+            _ => self.parse_object(depth),
         }
     }
 
-    fn parse_object(&mut self) -> ToonResult<Value> {
+    fn parse_object(&mut self, depth: usize) -> ToonResult<Value> {
+        validate_depth(depth, MAX_DEPTH)?;
+
         let mut obj = Map::new();
         let mut base_indent: Option<usize> = None;
 
@@ -114,27 +153,31 @@ impl Parser {
             }
 
             let key = match &self.current_token {
-                Token::String(s) => s.clone(),
+                Token::String(s, _) => s.clone(),
                 _ => {
-                    return Err(ToonError::InvalidInput(format!(
-                        "Expected key, found {:?}",
-                        self.current_token
-                    )))
+                    return Err(self
+                        .parse_error_with_context(format!(
+                            "Expected key, found {:?}",
+                            self.current_token
+                        ))
+                        .with_suggestion("Object keys must be strings"));
                 }
             };
             self.advance()?;
 
             let value = if matches!(self.current_token, Token::LeftBracket) {
-                self.parse_array()?
+                self.parse_array(depth)?
             } else {
                 if !matches!(self.current_token, Token::Colon) {
-                    return Err(ToonError::InvalidInput(format!(
-                        "Expected ':' or '[', found {:?}",
-                        self.current_token
-                    )));
+                    return Err(self
+                        .parse_error_with_context(format!(
+                            "Expected ':' or '[', found {:?}",
+                            self.current_token
+                        ))
+                        .with_suggestion("Use ':' for object values or '[' for arrays"));
                 }
                 self.advance()?;
-                self.parse_field_value()?
+                self.parse_field_value(depth)?
             };
 
             obj.insert(key, value);
@@ -143,20 +186,24 @@ impl Parser {
         Ok(Value::Object(obj))
     }
 
-    fn parse_object_with_initial_key(&mut self, key: String) -> ToonResult<Value> {
+    fn parse_object_with_initial_key(&mut self, key: String, depth: usize) -> ToonResult<Value> {
+        validate_depth(depth, MAX_DEPTH)?;
+
         let mut obj = Map::new();
 
         let value = if matches!(self.current_token, Token::LeftBracket) {
-            self.parse_array()?
+            self.parse_array(depth)?
         } else {
             if !matches!(self.current_token, Token::Colon) {
-                return Err(ToonError::InvalidInput(format!(
-                    "Expected ':' or '[', found {:?}",
-                    self.current_token
-                )));
+                return Err(self
+                    .parse_error_with_context(format!(
+                        "Expected ':' or '[', found {:?}",
+                        self.current_token
+                    ))
+                    .with_suggestion("Use ':' for object values or '[' for arrays"));
             }
             self.advance()?;
-            self.parse_field_value()?
+            self.parse_field_value(depth)?
         };
 
         obj.insert(key, value);
@@ -169,19 +216,19 @@ impl Parser {
             }
 
             let next_key = match &self.current_token {
-                Token::String(s) => s.clone(),
+                Token::String(s, _) => s.clone(),
                 _ => break,
             };
             self.advance()?;
 
             let next_value = if matches!(self.current_token, Token::LeftBracket) {
-                self.parse_array()?
+                self.parse_array(depth)?
             } else {
                 if !matches!(self.current_token, Token::Colon) {
                     break;
                 }
                 self.advance()?;
-                self.parse_field_value()?
+                self.parse_field_value(depth)?
             };
 
             obj.insert(next_key, next_value);
@@ -191,16 +238,16 @@ impl Parser {
         Ok(Value::Object(obj))
     }
 
-    fn parse_field_value(&mut self) -> ToonResult<Value> {
+    fn parse_field_value(&mut self, depth: usize) -> ToonResult<Value> {
         match &self.current_token {
-            Token::Newline => {
-                self.parse_indented_object()
-            }
+            Token::Newline => self.parse_indented_object(depth + 1),
             _ => self.parse_primitive(),
         }
     }
 
-    fn parse_indented_object(&mut self) -> ToonResult<Value> {
+    fn parse_indented_object(&mut self, depth: usize) -> ToonResult<Value> {
+        validate_depth(depth, MAX_DEPTH)?;
+
         let mut obj = Map::new();
 
         loop {
@@ -208,31 +255,38 @@ impl Parser {
                 self.advance()?;
             }
 
-            if self.scanner.get_last_line_indent() == 0 || matches!(self.current_token, Token::Eof) {
+            if self.scanner.get_last_line_indent() == 0 || matches!(self.current_token, Token::Eof)
+            {
                 break;
             }
 
             let key = match &self.current_token {
-                Token::String(s) => s.clone(),
+                Token::String(s, _) => s.clone(),
                 _ => {
-                    return Err(ToonError::InvalidInput(format!(
-                        "Expected key, found {:?}", self.current_token
-                    )))
+                    return Err(self
+                        .parse_error_with_context(format!(
+                            "Expected key, found {:?}",
+                            self.current_token
+                        ))
+                        .with_suggestion("Object keys must be strings"));
                 }
             };
 
             self.advance()?;
 
             let value = if matches!(self.current_token, Token::LeftBracket) {
-                self.parse_array()?
+                self.parse_array(depth)?
             } else {
                 if !matches!(self.current_token, Token::Colon) {
-                    return Err(ToonError::InvalidInput(format!(
-                        "Expected ':' or '[', found {:?}", self.current_token
-                    )));
+                    return Err(self
+                        .parse_error_with_context(format!(
+                            "Expected ':' or '[', found {:?}",
+                            self.current_token
+                        ))
+                        .with_suggestion("Use ':' after object keys"));
                 }
                 self.advance()?;
-                self.parse_field_value()?
+                self.parse_field_value(depth)?
             };
 
             obj.insert(key, value);
@@ -246,56 +300,97 @@ impl Parser {
 
     fn parse_primitive(&mut self) -> ToonResult<Value> {
         match &self.current_token {
+            Token::String(s, is_quoted) => {
+                let value = if *is_quoted {
+                    Value::String(s.clone())
+                } else if self.options.coerce_types {
+                    self.coerce_string_to_type(s)
+                } else {
+                    Value::String(s.clone())
+                };
+                self.advance()?;
+                Ok(value)
+            }
+            Token::Integer(i) => {
+                let value = Value::Number((*i).into());
+                self.advance()?;
+                Ok(value)
+            }
+            Token::Number(f) => {
+                let value = Number::from_f64(*f)
+                    .map(Value::Number)
+                    .unwrap_or_else(|| Value::String(f.to_string()));
+                self.advance()?;
+                Ok(value)
+            }
+            Token::Bool(b) => {
+                let value = *b;
+                self.advance()?;
+                Ok(Value::Bool(value))
+            }
             Token::Null => {
                 self.advance()?;
                 Ok(Value::Null)
             }
-            Token::Bool(b) => {
-                let val = *b;
-                self.advance()?;
-                Ok(Value::Bool(val))
-            }
-            Token::Integer(i) => {
-                let val = *i;
-                self.advance()?;
-                Ok(serde_json::Number::from(val).into())
-            }
-            Token::Number(n) => {
-                let val = *n;
-                self.advance()?;
-                Ok(serde_json::Number::from_f64(val)
-                    .ok_or_else(|| {
-                        ToonError::InvalidInput(format!("Invalid number: {}", val))
-                    })?
-                    .into())
-            }
-            Token::String(s) => {
-                let mut accumulated = s.clone();
-                self.advance()?;
-
-                loop {
-                    match &self.current_token {
-                        Token::String(next) => {
-                            if !accumulated.is_empty() { accumulated.push(' '); }
-                            accumulated.push_str(next);
-                            self.advance()?;
-                        }
-                        _ => break,
-                    }
-                }
-
-                Ok(Value::String(accumulated))
-            }
-            _ => Err(ToonError::InvalidInput(format!(
-                "Expected primitive value, found {:?}",
-                self.current_token
-            ))),
+            _ => Err(self
+                .parse_error_with_context(format!(
+                    "Expected primitive value, found {:?}",
+                    self.current_token
+                ))
+                .with_suggestion("Expected a value (string, number, boolean, or null)")),
         }
     }
 
-    fn parse_array(&mut self) -> ToonResult<Value> {
+    fn create_error_context(&self) -> ErrorContext {
+        let line = self.scanner.get_line();
+        let column = self.scanner.get_column();
+
+        ErrorContext::from_input(self.input, line, column, 2)
+            .unwrap_or_else(|| ErrorContext::new("").with_indicator(column))
+    }
+
+    fn parse_error_with_context(&self, message: impl Into<String>) -> ToonError {
+        let context = self.create_error_context();
+        ToonError::parse_error_with_context(
+            self.scanner.get_line(),
+            self.scanner.get_column(),
+            message,
+            context,
+        )
+    }
+
+    fn coerce_string_to_type(&self, s: &str) -> Value {
+        if s == "null" {
+            return Value::Null;
+        }
+
+        if s == "true" {
+            return Value::Bool(true);
+        }
+        if s == "false" {
+            return Value::Bool(false);
+        }
+
+        if let Ok(i) = s.parse::<i64>() {
+            return Value::Number(i.into());
+        }
+
+        if let Ok(f) = s.parse::<f64>() {
+            if let Some(num) = Number::from_f64(f) {
+                return Value::Number(num);
+            }
+        }
+
+        Value::String(s.to_string())
+    }
+
+    fn parse_array(&mut self, depth: usize) -> ToonResult<Value> {
+        validate_depth(depth, MAX_DEPTH)?;
+
         if !matches!(self.current_token, Token::LeftBracket) {
-            return Err(ToonError::InvalidInput("Expected '['".to_string()));
+            return Err(self
+                .parse_error_with_context("Expected '['")
+                .with_suggestion("Arrays must start with '['"));
         }
         self.advance()?;
 
@@ -304,7 +399,9 @@ impl Parser {
         self.detect_or_consume_delimiter()?;
 
         if !matches!(self.current_token, Token::RightBracket) {
-            return Err(ToonError::InvalidInput("Expected ']'".to_string()));
+            return Err(self
+                .parse_error_with_context("Expected ']'")
+                .with_suggestion("Close array length with ']'"));
         }
         self.advance()?;
 
@@ -320,7 +417,9 @@ impl Parser {
         };
 
         if !matches!(self.current_token, Token::Colon) {
-            return Err(ToonError::InvalidInput("Expected ':'".to_string()));
+            return Err(self
+                .parse_error_with_context("Expected ':'")
+                .with_suggestion("Array header must end with ':'"));
         }
         self.advance()?;
 
@@ -329,20 +428,27 @@ impl Parser {
         }
 
         if let Some(fields) = fields {
-            self.parse_tabular_array(length, fields)
+            validation::validate_field_list(&fields)?;
+            self.parse_tabular_array(length, fields, depth)
         } else {
-            self.parse_regular_array(length)
+            self.parse_regular_array(length, depth)
         }
+    }
+
+    fn parse_root_array(&mut self, depth: usize) -> ToonResult<Value> {
+        validate_depth(depth, MAX_DEPTH)?;
+        self.parse_array(depth)
     }
 
     fn parse_array_length(&mut self) -> ToonResult<usize> {
         if let Some(length_str) = match &self.current_token {
-            Token::String(s) if s.starts_with('#') => Some(s[1..].to_string()),
+            Token::String(s, _) if s.starts_with('#') => Some(s[1..].to_string()),
             _ => None,
         } {
             self.advance()?;
             return length_str.parse::<usize>().map_err(|_| {
-                ToonError::InvalidInput(format!("Invalid array length: {}", length_str))
+                self.parse_error_with_context(format!("Invalid array length: {}", length_str))
+                    .with_suggestion("Length must be a positive number")
             });
         }
 
@@ -352,10 +458,12 @@ impl Parser {
                 self.advance()?;
                 Ok(len)
             }
-            _ => Err(ToonError::InvalidInput(format!(
-                "Expected array length, found {:?}",
-                self.current_token
-            ))),
+            _ => Err(self
+                .parse_error_with_context(format!(
+                    "Expected array length, found {:?}",
+                    self.current_token
+                ))
+                .with_suggestion("Array must have a length like [5] or #5")),
         }
     }
 
@@ -367,7 +475,7 @@ impl Parser {
                 }
                 self.advance()?;
             }
-            Token::String(s) if s == "," || s == "|" || s == "\t" => {
+            Token::String(s, _) if s == "," || s == "|" || s == "\t" => {
                 let delim = if s == "," {
                     Delimiter::Comma
                 } else if s == "|" {
@@ -388,7 +496,9 @@ impl Parser {
 
     fn parse_field_list(&mut self) -> ToonResult<Vec<String>> {
         if !matches!(self.current_token, Token::LeftBrace) {
-            return Err(ToonError::InvalidInput("Expected '{'".to_string()));
+            return Err(self
+                .parse_error_with_context("Expected '{'")
+                .with_suggestion("Tabular arrays need field list like {id,name}"));
         }
         self.advance()?;
 
@@ -396,7 +506,7 @@ impl Parser {
 
         loop {
             match &self.current_token {
-                Token::String(s) => {
+                Token::String(s, _) => {
                     fields.push(s.clone());
                     self.advance()?;
 
@@ -408,30 +518,41 @@ impl Parser {
                 }
                 Token::RightBrace => break,
                 _ => {
-                    return Err(ToonError::InvalidInput(format!(
-                        "Expected field name, found {:?}",
-                        self.current_token
-                    )))
+                    return Err(self
+                        .parse_error_with_context(format!(
+                            "Expected field name, found {:?}",
+                            self.current_token
+                        ))
+                        .with_suggestion("Field names must be strings separated by commas"));
                 }
             }
         }
 
         if !matches!(self.current_token, Token::RightBrace) {
-            return Err(ToonError::InvalidInput("Expected '}'".to_string()));
+            return Err(self
+                .parse_error_with_context("Expected '}'")
+                .with_suggestion("Close field list with '}'"));
         }
         self.advance()?;
 
         Ok(fields)
     }
 
-    fn parse_tabular_array(&mut self, length: usize, fields: Vec<String>) -> ToonResult<Value> {
+    fn parse_tabular_array(
+        &mut self,
+        length: usize,
+        fields: Vec<String>,
+        depth: usize,
+    ) -> ToonResult<Value> {
+        validate_depth(depth, MAX_DEPTH)?;
+
         let mut rows = Vec::new();
 
         self.skip_newlines()?;
 
         self.scanner.set_active_delimiter(self.delimiter);
 
-        for _ in 0..length {
+        for row_index in 0..length {
             let mut row = Map::new();
 
             for (i, field) in fields.iter().enumerate() {
@@ -440,13 +561,19 @@ impl Parser {
                         Token::Delimiter(_) => {
                             self.advance()?;
                         }
-                        Token::String(s) if s == "," || s == "|" || s == "\t" => {
+                        Token::String(s, _) if s == "," || s == "|" || s == "\t" => {
                             self.advance()?;
                         }
-                        other => {
-                            return Err(ToonError::InvalidInput(format!(
-                                "Expected delimiter, found {:?}", other
-                            )));
+                        _ => {
+                            return Err(self
+                                .parse_error_with_context(format!(
+                                    "Expected delimiter in tabular row {}, got {:?}",
+                                    row_index, self.current_token
+                                ))
+                                .with_suggestion(&format!(
+                                    "Expected delimiter between fields in row {}",
+                                    row_index + 1
+                                )));
                         }
                     }
                 }
@@ -456,79 +583,99 @@ impl Parser {
             }
 
             rows.push(Value::Object(row));
-            self.skip_newlines()?;
+
+            if row_index < length - 1 {
+                self.skip_newlines()?;
+            }
         }
+
+        validation::validate_array_length(length, rows.len(), self.options.strict)?;
 
         Ok(Value::Array(rows))
     }
 
-    fn parse_regular_array(&mut self, length: usize) -> ToonResult<Value> {
-        self.skip_newlines()?;
+    fn parse_regular_array(&mut self, length: usize, depth: usize) -> ToonResult<Value> {
+        let mut items = Vec::new();
 
-        self.scanner.set_active_delimiter(self.delimiter);
+        match &self.current_token {
+            Token::Newline => {
+                self.skip_newlines()?;
 
-        if matches!(self.current_token, Token::Dash) {
-            self.parse_nested_array(length)
-        } else {
-            self.parse_primitive_array(length)
-        }
-    }
-
-    fn parse_primitive_array(&mut self, length: usize) -> ToonResult<Value> {
-        let mut values = Vec::new();
-
-        for i in 0..length {
-            if i > 0 {
-                match &self.current_token {
-                    Token::Delimiter(_) => {
-                        self.advance()?;
+                for i in 0..length {
+                    if !matches!(self.current_token, Token::Dash) {
+                        return Err(self
+                            .parse_error_with_context(format!(
+                                "Expected '-' for list item, found {:?}",
+                                self.current_token
+                            ))
+                            .with_suggestion(&format!(
+                                "List arrays need '-' prefix for each item (item {} of {})",
+                                i + 1,
+                                length
+                            )));
                     }
-                    Token::String(s) if s == "," || s == "|" || s == "\t" => {
-                        self.advance()?;
-                    }
-                    other => {
-                        return Err(ToonError::InvalidInput(format!(
-                            "Expected delimiter, found {:?}", other
-                        )));
+                    self.advance()?;
+
+                    let value = if matches!(self.current_token, Token::LeftBracket) {
+                        self.parse_array(depth + 1)?
+                    } else {
+                        self.parse_primitive()?
+                    };
+
+                    items.push(value);
+
+                    if items.len() < length {
+                        self.skip_newlines()?;
                     }
                 }
             }
+            _ => {
+                for i in 0..length {
+                    if i > 0 {
+                        match &self.current_token {
+                            Token::Delimiter(_) => {
+                                self.advance()?;
+                            }
+                            Token::String(s, _) if s == "," || s == "|" || s == "\t" => {
+                                self.advance()?;
+                            }
+                            _ => {
+                                return Err(self
+                                    .parse_error_with_context(format!(
+                                        "Expected delimiter, found {:?}",
+                                        self.current_token
+                                    ))
+                                    .with_suggestion(&format!(
+                                        "Expected delimiter between items (item {} of {})",
+                                        i + 1,
+                                        length
+                                    )));
+                            }
+                        }
+                    }
 
-            values.push(self.parse_primitive()?);
-        }
+                    let value = if matches!(self.current_token, Token::LeftBracket) {
+                        self.parse_array(depth + 1)?
+                    } else {
+                        self.parse_primitive()?
+                    };
 
-        Ok(Value::Array(values))
-    }
-
-    fn parse_nested_array(&mut self, length: usize) -> ToonResult<Value> {
-        let mut items = Vec::new();
-
-        for _ in 0..length {
-            if !matches!(self.current_token, Token::Dash) {
-                return Err(ToonError::InvalidInput(format!(
-                    "Expected '-', found {:?}",
-                    self.current_token
-                )));
+                    items.push(value);
+                }
             }
-            self.advance()?;
-
-            let value = self.parse_field_value()?;
-            items.push(value);
-            self.skip_newlines()?;
         }
+
+        validation::validate_array_length(length, items.len(), self.options.strict)?;
 
         Ok(Value::Array(items))
-    }
-
-    fn parse_root_array(&mut self) -> ToonResult<Value> {
-        self.parse_array()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     fn parse(input: &str) -> ToonResult<Value> {
         let mut parser = Parser::new(input, DecodeOptions::default());
@@ -546,7 +693,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_object() {
+    fn test_parse_simple_object() {
         let result = parse("name: Alice\nage: 30").unwrap();
         assert_eq!(result["name"], json!("Alice"));
         assert_eq!(result["age"], json!(30));

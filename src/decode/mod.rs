@@ -1,13 +1,35 @@
 pub mod parser;
 pub mod scanner;
+pub mod validation;
 
-use crate::error::{ToonResult};
-use crate::types::DecodeOptions;
 use serde_json::Value;
+
+use crate::{
+    error::ToonResult,
+    types::DecodeOptions,
+};
 
 pub fn decode(input: &str, options: &DecodeOptions) -> ToonResult<Value> {
     let mut parser = parser::Parser::new(input, options.clone());
     parser.parse()
+}
+
+pub fn decode_strict(input: &str) -> ToonResult<Value> {
+    decode(input, &DecodeOptions::new().with_strict(true))
+}
+
+pub fn decode_strict_with_options(input: &str, options: &DecodeOptions) -> ToonResult<Value> {
+    let opts = options.clone().with_strict(true);
+    decode(input, &opts)
+}
+
+pub fn decode_no_coerce(input: &str) -> ToonResult<Value> {
+    decode(input, &DecodeOptions::new().with_coerce_types(false))
+}
+
+pub fn decode_no_coerce_with_options(input: &str, options: &DecodeOptions) -> ToonResult<Value> {
+    let opts = options.clone().with_coerce_types(false);
+    decode(input, &opts)
 }
 
 pub fn decode_default(input: &str) -> ToonResult<Value> {
@@ -16,8 +38,9 @@ pub fn decode_default(input: &str) -> ToonResult<Value> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     #[test]
     fn test_decode_null() {
@@ -58,10 +81,7 @@ mod tests {
     fn test_decode_primitive_array() {
         let input = "tags[3]: reading,gaming,coding";
         let result = decode_default(input).unwrap();
-        assert_eq!(
-            result["tags"],
-            json!(["reading", "gaming", "coding"])
-        );
+        assert_eq!(result["tags"], json!(["reading", "gaming", "coding"]));
     }
 
     #[test]
