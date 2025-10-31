@@ -69,13 +69,17 @@ jobs:
       - name: Get default branch
         id: default_branch
         run: |
-          BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
+          BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+          if [ -z "$BRANCH" ] || [ "$BRANCH" = "HEAD" ]; then
+            BRANCH="main"
+          fi
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
           echo "Default branch: $BRANCH"
       
       - name: Checkout main branch
         run: |
-          git checkout ${{ steps.default_branch.outputs.branch }} || git checkout main || git checkout master
+          git fetch origin +${{ steps.default_branch.outputs.branch }}:refs/remotes/origin/${{ steps.default_branch.outputs.branch }}
+          git checkout -B ${{ steps.default_branch.outputs.branch }} origin/${{ steps.default_branch.outputs.branch }}
       
       - name: Generate changelog
         id: changelog
@@ -100,7 +104,7 @@ jobs:
           git add CHANGELOG.md
           if ! git diff --staged --quiet; then
             git commit -m "chore: update changelog for v${{ steps.get_version.outputs.version }}"
-            git push origin ${{ steps.default_branch.outputs.branch }}
+            git push origin HEAD:${{ steps.default_branch.outputs.branch }}
           fi
       
       - name: Build release
