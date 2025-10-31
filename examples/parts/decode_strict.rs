@@ -1,4 +1,7 @@
-use rtoon::{decode, DecodeOptions};
+use rtoon::{
+    decode,
+    DecodeOptions,
+};
 
 pub fn decode_strict() {
     // Malformed: header says 2 rows, but only 1 provided
@@ -10,5 +13,3 @@ pub fn decode_strict() {
         Err(err) => println!("Strict decode error: {}", err),
     }
 }
-
-

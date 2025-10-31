@@ -1,5 +1,5 @@
-use serde_json::json;
 use rtoon::encode_default;
+use serde_json::json;
 
 pub fn objects() {
     // Simple object
@@ -18,5 +18,3 @@ pub fn objects() {
     let out_nested = encode_default(&nested).unwrap();
     println!("\n{}", out_nested);
 }
-
-

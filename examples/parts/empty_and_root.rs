@@ -1,5 +1,5 @@
-use serde_json::json;
 use rtoon::encode_default;
+use serde_json::json;
 
 pub fn empty_and_root() {
     // Empty containers
@@ -19,5 +19,3 @@ pub fn empty_and_root() {
         println!("\n{}", out);
     }
 }
-
-

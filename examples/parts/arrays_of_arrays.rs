@@ -1,5 +1,5 @@
-use serde_json::json;
 use rtoon::encode_default;
+use serde_json::json;
 
 pub fn arrays_of_arrays() {
     // Arrays containing primitive inner arrays
@@ -9,5 +9,3 @@ pub fn arrays_of_arrays() {
     let out = encode_default(&pairs).unwrap();
     println!("{}", out);
 }
-
-

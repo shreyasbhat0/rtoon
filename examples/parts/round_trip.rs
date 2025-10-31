@@ -1,5 +1,8 @@
+use rtoon::{
+    decode_default,
+    encode_default,
+};
 use serde_json::json;
-use rtoon::{decode_default, encode_default};
 
 pub fn round_trip() {
     let original = json!({
@@ -15,5 +18,3 @@ pub fn round_trip() {
     println!("Encoded:\n{}", encoded);
     println!("\nRound-trip equal: {}", original == decoded);
 }
-
-

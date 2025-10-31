@@ -1,5 +1,11 @@
+use rtoon::{
+    decode_default,
+    encode,
+    encode_default,
+    Delimiter,
+    EncodeOptions,
+};
 use serde_json::json;
-use rtoon::{decode_default, encode, encode_default, Delimiter, EncodeOptions};
 
 #[test]
 fn test_delimiter_variants() {

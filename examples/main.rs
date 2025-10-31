@@ -1,15 +1,25 @@
-#[path = "parts/arrays.rs"] mod arrays;
-#[path = "parts/arrays_of_arrays.rs"] mod arrays_of_arrays;
-#[path = "parts/objects.rs"] mod objects;
-#[path = "parts/delimiters.rs"] mod delimiters;
-#[path = "parts/mixed_arrays.rs"] mod mixed_arrays;
-#[path = "parts/round_trip.rs"] mod round_trip;
-#[path = "parts/tabular.rs"] mod tabular;
-#[path = "parts/length_marker.rs"] mod length_marker;
-#[path = "parts/empty_and_root.rs"] mod empty_and_root;
-#[path = "parts/decode_strict.rs"] mod decode_strict;
+#[path = "parts/arrays.rs"]
+mod arrays;
+#[path = "parts/arrays_of_arrays.rs"]
+mod arrays_of_arrays;
+#[path = "parts/decode_strict.rs"]
+mod decode_strict;
+#[path = "parts/delimiters.rs"]
+mod delimiters;
+#[path = "parts/empty_and_root.rs"]
+mod empty_and_root;
+#[path = "parts/length_marker.rs"]
+mod length_marker;
+#[path = "parts/mixed_arrays.rs"]
+mod mixed_arrays;
+#[path = "parts/objects.rs"]
+mod objects;
+#[path = "parts/round_trip.rs"]
+mod round_trip;
+#[path = "parts/tabular.rs"]
+mod tabular;
 
-fn main(){
+fn main() {
     println!("=== R-Toon Consolidated Examples ===\n");
 
     println!("-- array examples --");

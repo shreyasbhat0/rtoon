@@ -1,5 +1,9 @@
+use rtoon::{
+    encode,
+    Delimiter,
+    EncodeOptions,
+};
 use serde_json::json;
-use rtoon::{encode, Delimiter, EncodeOptions};
 
 pub fn delimiters() {
     let data = json!({
@@ -17,5 +21,3 @@ pub fn delimiters() {
     let pipe = encode(&data, &EncodeOptions::new().with_delimiter(Delimiter::Pipe)).unwrap();
     println!("\n{}", pipe);
 }
-
-

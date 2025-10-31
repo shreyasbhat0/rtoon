@@ -1,5 +1,8 @@
+use rtoon::{
+    encode,
+    EncodeOptions,
+};
 use serde_json::json;
-use rtoon::{encode, EncodeOptions};
 
 pub fn length_marker() {
     let data = json!({
@@ -13,5 +16,3 @@ pub fn length_marker() {
     let out = encode(&data, &EncodeOptions::new().with_length_marker('#')).unwrap();
     println!("{}", out);
 }
-
-

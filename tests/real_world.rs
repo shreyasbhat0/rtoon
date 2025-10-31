@@ -1,5 +1,8 @@
+use rtoon::{
+    decode_default,
+    encode_default,
+};
 use serde_json::json;
-use rtoon::{decode_default, encode_default};
 
 #[test]
 fn test_real_world_github_data() {

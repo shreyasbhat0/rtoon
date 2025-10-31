@@ -1,5 +1,5 @@
-use serde_json::json;
 use rtoon::encode_default;
+use serde_json::json;
 
 pub fn mixed_arrays() {
     // Mixed / non-uniform arrays (list format)
@@ -17,5 +17,3 @@ pub fn mixed_arrays() {
     });
     println!("\n{}", encode_default(&list_objects).unwrap());
 }
-
-

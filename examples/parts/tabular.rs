@@ -1,5 +1,5 @@
-use serde_json::json;
 use rtoon::encode_default;
+use serde_json::json;
 
 pub fn tabular() {
     // Arrays of objects (tabular)
@@ -27,5 +27,3 @@ pub fn tabular() {
     let out_nested = encode_default(&nested).unwrap();
     println!("\n{}", out_nested);
 }
-
-
