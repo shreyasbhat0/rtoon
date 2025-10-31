@@ -19,6 +19,9 @@ mod round_trip;
 #[path = "parts/tabular.rs"]
 mod tabular;
 
+#[path = "parts/types.rs"]
+mod types;
+
 fn main() {
     println!("=== R-Toon Consolidated Examples ===\n");
 
@@ -51,6 +54,9 @@ fn main() {
 
     println!("\n-- decode strict --");
     decode_strict::decode_strict();
+
+    println!("\n-- struct example --");
+    types::example().unwrap();
 
     println!("\n=== Examples Complete ===");
 }
