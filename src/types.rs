@@ -1,5 +1,9 @@
-use serde::{Deserialize, Serialize};
 use std::fmt;
+
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Delimiter {
@@ -95,19 +99,31 @@ impl EncodeOptions {
             length.to_string()
         }
     }
+
+    pub fn with_spaces(mut self, count: usize) -> Self {
+        self.indent = " ".repeat(count);
+        self
+    }
+
+    pub fn with_tabs(mut self) -> Self {
+        self.indent = "\t".to_string();
+        self
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DecodeOptions {
     pub delimiter: Option<Delimiter>,
     pub strict: bool,
+    pub coerce_types: bool,
 }
 
 impl Default for DecodeOptions {
     fn default() -> Self {
         Self {
             delimiter: None,
-            strict: false,
+            strict: true,
+            coerce_types: true,
         }
     }
 }
@@ -124,6 +140,10 @@ impl DecodeOptions {
 
     pub fn with_delimiter(mut self, delimiter: Delimiter) -> Self {
         self.delimiter = Some(delimiter);
+        self
+    }
+    pub fn with_coerce_types(mut self, coerce: bool) -> Self {
+        self.coerce_types = coerce;
         self
     }
 }
@@ -162,5 +182,29 @@ mod tests {
 
         let opts = EncodeOptions::new();
         assert_eq!(opts.format_length(5), "5");
+    }
+
+    #[test]
+    fn test_encode_options_indent() {
+        let opts = EncodeOptions::new().with_spaces(4);
+        assert_eq!(opts.indent, "    ");
+
+        let opts = EncodeOptions::new().with_tabs();
+        assert_eq!(opts.indent, "\t");
+
+        let opts = EncodeOptions::new().with_indent("   ");
+        assert_eq!(opts.indent, "   ");
+    }
+
+    #[test]
+    fn test_decode_options_coerce_types() {
+        let opts = DecodeOptions::new();
+        assert!(opts.coerce_types);
+
+        let opts = DecodeOptions::new().with_coerce_types(false);
+        assert!(!opts.coerce_types);
+
+        let opts = DecodeOptions::new().with_coerce_types(true);
+        assert!(opts.coerce_types);
     }
 }
