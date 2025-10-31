@@ -50,6 +50,20 @@ pub fn decode_strict(input: &str) -> ToonResult<Value> {
 }
 
 /// Decode with strict validation and additional options.
+///
+/// # Examples
+///
+/// ```
+/// use rtoon::{decode_strict_with_options, DecodeOptions};
+/// use serde_json::json;
+///
+/// let options = DecodeOptions::new()
+///     .with_strict(true)
+///     .with_delimiter(rtoon::Delimiter::Pipe);
+/// let result = decode_strict_with_options("items[2]: a|b", &options)?;
+/// assert_eq!(result["items"], json!(["a", "b"]));
+/// # Ok::<(), rtoon::ToonError>(())
+/// ```
 pub fn decode_strict_with_options(input: &str, options: &DecodeOptions) -> ToonResult<Value> {
     let opts = options.clone().with_strict(true);
     decode(input, &opts)
@@ -77,6 +91,20 @@ pub fn decode_no_coerce(input: &str) -> ToonResult<Value> {
 }
 
 /// Decode without type coercion and with additional options.
+///
+/// # Examples
+///
+/// ```
+/// use rtoon::{decode_no_coerce_with_options, DecodeOptions};
+/// use serde_json::json;
+///
+/// let options = DecodeOptions::new()
+///     .with_coerce_types(false)
+///     .with_strict(false);
+/// let result = decode_no_coerce_with_options("value: \"123\"", &options)?;
+/// assert_eq!(result["value"], json!("123"));
+/// # Ok::<(), rtoon::ToonError>(())
+/// ```
 pub fn decode_no_coerce_with_options(input: &str, options: &DecodeOptions) -> ToonResult<Value> {
     let opts = options.clone().with_coerce_types(false);
     decode(input, &opts)

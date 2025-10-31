@@ -452,6 +452,8 @@ Strict mode (default) checks:
 ```rust
 pub fn encode(value: &serde_json::Value, options: &EncodeOptions) -> ToonResult<String>
 pub fn encode_default(value: &serde_json::Value) -> ToonResult<String>
+pub fn encode_object(value: &serde_json::Value, options: &EncodeOptions) -> ToonResult<String>
+pub fn encode_array(value: &serde_json::Value, options: &EncodeOptions) -> ToonResult<String>
 ```
 
 ### Decoding Functions
@@ -460,6 +462,9 @@ pub fn encode_default(value: &serde_json::Value) -> ToonResult<String>
 pub fn decode(input: &str, options: &DecodeOptions) -> ToonResult<serde_json::Value>
 pub fn decode_default(input: &str) -> ToonResult<serde_json::Value>
 pub fn decode_strict(input: &str) -> ToonResult<serde_json::Value>
+pub fn decode_strict_with_options(input: &str, options: &DecodeOptions) -> ToonResult<serde_json::Value>
+pub fn decode_no_coerce(input: &str) -> ToonResult<serde_json::Value>
+pub fn decode_no_coerce_with_options(input: &str, options: &DecodeOptions) -> ToonResult<serde_json::Value>
 ```
 
 ### EncodeOptions
