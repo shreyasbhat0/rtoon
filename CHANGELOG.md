@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [v0.1.3] - 2025-10-31
+
+
+### Added
+
+
+- Add to_toon/from_toon for direct type serialization [e3f4e41]
+
+
+
+### Changed
+
+
+- Update changelog for v0.1.2 [72748fc]
+
+- Cargo lint [3c8aa1b]
+
+- Bump release version [6241f25]
+
+
+
+### Documentation
+
+
+- Update readme [f014ff5]
+
+
 ## [v0.1.2] - 2025-10-31
 
 
