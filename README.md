@@ -1,9 +1,21 @@
-# TOON (Token-Oriented Object Notation) — Rust
+<div align="center">
+
+# 🦀 RToon
+
+**Rust implementation of TOON (Token-Oriented Object Notation)**
+
+*A compact, token-efficient format for structured data in LLM applications*
+
+<img src="https://github.com/alpkeskin/gotoon/raw/main/.github/og.png" alt="TOON - Token-Oriented Object Notation" width="600">
 
 [![Crates.io](https://img.shields.io/crates/v/rtoon)](https://crates.io/crates/rtoon)
 [![CI](https://github.com/shreyasbhat0/toon-rs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/shreyasbhat0/toon-rs/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/shreyasbhat0/toon-rs/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+</div>
+
+---
 
 **Token-Oriented Object Notation** is a compact, human-readable format designed for passing structured data to Large Language Models with significantly reduced token usage. This is a Rust implementation of the TOON specification.
 
@@ -38,8 +50,14 @@
 
 ## Why TOON?
 
-AI is becoming cheaper and more accessible, but larger context windows allow for larger data inputs as well. **LLM tokens still cost money** – and standard JSON is verbose and token-expensive:
+AI is becoming cheaper and more accessible, but larger context windows allow for larger data inputs as well. **LLM tokens still cost money** – and standard JSON is verbose and token-expensive.
 
+### JSON vs TOON Comparison
+
+<details>
+<summary><strong>📊 Click to see the token efficiency comparison</strong></summary>
+
+**JSON** (verbose, token-heavy):
 ```json
 {
   "users": [
@@ -49,13 +67,16 @@ AI is becoming cheaper and more accessible, but larger context windows allow for
 }
 ```
 
-TOON conveys the same information with **30–60% fewer tokens**:
-
-```
+**TOON** (compact, token-efficient):
+```toon
 users[2]{id,name,role}:
   1,Alice,admin
   2,Bob,user
 ```
+
+TOON conveys the same information with **30–60% fewer tokens**! 🎉
+
+</details>
 
 ## Key Features
 
@@ -102,7 +123,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 **Output:**
 
-```
+```toon
 user:
   active: true
   id: 123
@@ -110,9 +131,11 @@ user:
   tags[2]: reading,gaming
 ```
 
+---
+
 ## Examples
 
-All examples in this section are taken from the `examples/` directory. Run `cargo run --example examples` to see them in action.
+> **📝 Note:** All examples in this section are taken from the `examples/` directory. Run `cargo run --example examples` to see them in action.
 
 ### Objects
 
@@ -132,7 +155,7 @@ println!("{}", encode_default(&data).unwrap());
 
 **Output:**
 
-```
+```toon
 active: true
 id: 123
 name: Ada
@@ -149,7 +172,7 @@ println!("{}", encode_default(&nested).unwrap());
 
 **Output:**
 
-```
+```toon
 user:
   id: 123
   name: Ada
@@ -169,7 +192,7 @@ println!("{}", encode_default(&data).unwrap());
 
 **Output:**
 
-```
+```toon
 tags[3]: admin,ops,dev
 ```
 
@@ -192,7 +215,7 @@ println!("{}", encode_default(&data).unwrap());
 
 **Output:**
 
-```
+```toon
 items[2]{sku,qty,price}:
   A1,2,9.99
   B2,1,14.5
@@ -217,7 +240,7 @@ println!("{}", encode_default(&nested).unwrap());
 
 **Output:**
 
-```
+```toon
 items[1]:
   status: active
   users[2]{id,name}:
@@ -241,7 +264,7 @@ println!("{}", encode_default(&data).unwrap());
 
 **Output:**
 
-```
+```toon
 pairs[2]:
   - [2]: 1,2
   - [2]: 3,4
@@ -263,7 +286,7 @@ println!("{}", encode_default(&mixed).unwrap());
 
 **Output:**
 
-```
+```toon
 items[3]:
   - 1
   - a: 1
@@ -284,7 +307,7 @@ println!("{}", encode_default(&list_objects).unwrap());
 
 **Output:**
 
-```
+```toon
 items[2]:
   - id: 1
     name: First
@@ -339,7 +362,7 @@ println!("{}", encode(&data, &opts).unwrap());
 
 **Output:**
 
-```
+```toon
 items[#2]{sku,qty,price}:
   A1,2,9.99
   B2,1,14.5
@@ -365,7 +388,7 @@ println!("{}", encode_default(&root_array).unwrap());
 
 **Output:**
 
-```
+```toon
 items[0]:
 
 [2]: x,y
@@ -419,6 +442,8 @@ Strict mode (default) checks:
 - Invalid escape sequences cause errors
 - Missing colons after keys cause errors
 - Blank lines inside arrays/tabular rows cause errors
+
+---
 
 ## API Reference
 
@@ -518,6 +543,8 @@ match decode_default(input) {
 }
 ```
 
+---
+
 ## Format Overview
 
 - **Objects:** `key: value` with 2-space indentation for nesting
@@ -562,9 +589,22 @@ This executes `examples/main.rs`, which invokes all parts under `examples/parts/
 - `round_trip.rs` — Encoding and decoding verification
 - `decode_strict.rs` — Strict mode validation
 
+---
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+<details>
+<summary><strong>🤝 How to Contribute</strong></summary>
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+</details>
 
 ## License
 
@@ -573,7 +613,12 @@ MIT © 2025
 ## See Also
 
 - **Original JavaScript/TypeScript implementation:** [@byjohann/toon](https://github.com/johannschopplich/toon)
+- **Go implementation:** [gotoon](https://github.com/alpkeskin/gotoon) by [@alpkeskin](https://github.com/alpkeskin)
 
 ---
 
-Built with ❤️ in Rust
+<div align="center">
+
+**Built with ❤️ in Rust**
+
+</div>
