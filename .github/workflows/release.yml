@@ -18,6 +18,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
       
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -58,6 +61,48 @@ jobs:
           fi
           echo "Version match confirmed: $CARGO_VERSION"
       
+      - name: Install git-cliff
+        uses: orhun/git-cliff-action@v2
+        with:
+          config: cliff.toml
+      
+      - name: Get default branch
+        id: default_branch
+        run: |
+          BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          echo "Default branch: $BRANCH"
+      
+      - name: Checkout main branch
+        run: |
+          git checkout ${{ steps.default_branch.outputs.branch }} || git checkout main || git checkout master
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          git fetch --tags --unshallow 2>/dev/null || git fetch --tags
+          git-cliff --config cliff.toml --output CHANGELOG.md --tag v${{ steps.get_version.outputs.version }}
+          # Extract release notes for this version
+          VERSION="${{ steps.get_version.outputs.version }}"
+          NOTES=$(awk "/^## \[v?$VERSION\]/,/^## \[/ {if (/^## \[/ && NR>1) exit; print}" CHANGELOG.md | head -n -1 || \
+                  awk "/^## \[v?$VERSION\]/,/^$/" CHANGELOG.md)
+          {
+            echo 'notes<<EOF'
+            echo "$NOTES"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+          cat CHANGELOG.md
+      
+      - name: Commit and push changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: update changelog for v${{ steps.get_version.outputs.version }}"
+            git push origin ${{ steps.default_branch.outputs.branch }}
+          fi
+      
       - name: Build release
         run: cargo build --release --verbose
       
@@ -66,35 +111,12 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
         run: cargo publish --verbose --no-verify
       
-      - name: Extract release notes
-        id: release_notes
-        run: |
-          # Try to extract from CHANGELOG.md if it exists, otherwise use tag message
-          if [ -f CHANGELOG.md ]; then
-            # Extract section for this version from CHANGELOG.md
-            VERSION="${{ steps.get_version.outputs.version }}"
-            NOTES=$(awk "/^## \[?$VERSION\]?/,/^## /" CHANGELOG.md | head -n -1 || \
-                    awk "/^## \[?$VERSION\]?/,/^$/" CHANGELOG.md)
-            if [ -z "$NOTES" ]; then
-              NOTES="Release version $VERSION"
-            fi
-          else
-            # Fallback: get tag message or create default
-            NOTES=$(git tag -l --format='%(contents)' v${{ steps.get_version.outputs.version }} || echo "Release version ${{ steps.get_version.outputs.version }}")
-          fi
-          # Store in multi-line format
-          {
-            echo 'notes<<EOF'
-            echo "$NOTES"
-            echo 'EOF'
-          } >> $GITHUB_OUTPUT
-      
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           name: Release v${{ steps.get_version.outputs.version }}
           body: |
-            ${{ steps.release_notes.outputs.notes }}
+            ${{ steps.changelog.outputs.notes }}
             
             ## Installation
             

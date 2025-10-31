@@ -1,0 +1,56 @@
+# git-cliff configuration
+# See: https://git-cliff.org/docs/configuration
+
+[changelog]
+header = """
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+"""
+body = """
+## [{% if version %}{{ version }}{% else %}Unreleased{% endif %}]{% if timestamp %} - {{ timestamp | date(format="%Y-%m-%d") }}{% endif %}
+
+{% for group, commits in commits | group_by(attribute="group") %}
+{% if group == "Added" %}{% raw %}### Added{% endraw %}
+{% elif group == "Fixed" %}{% raw %}### Fixed{% endraw %}
+{% elif group == "Changed" %}{% raw %}### Changed{% endraw %}
+{% elif group == "Documentation" %}{% raw %}### Documentation{% endraw %}
+{% elif group == "Performance" %}{% raw %}### Performance{% endraw %}
+{% elif group == "Testing" %}{% raw %}### Testing{% endraw %}
+{% elif group == "CI/CD" %}{% raw %}### CI/CD{% endraw %}
+{% elif group == "Build" %}{% raw %}### Build{% endraw %}
+{% else %}{% raw %}### Other{% endraw %}
+{% endif %}
+{% for commit in commits %}
+- {{ commit.message | upper_first }}{% if commit.scope %} *({{commit.scope}})*{% endif %} [{{ commit.id | truncate(length=7, end="") }}]
+{% endfor %}
+
+{% endfor %}
+"""
+footer = """
+"""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+split_commits = false
+commit_parsers = [
+    { message = "^feat", group = "Added" },
+    { message = "^fix", group = "Fixed" },
+    { message = "^doc", group = "Documentation" },
+    { message = "^perf", group = "Performance" },
+    { message = "^refactor", group = "Changed" },
+    { message = "^style", group = "Changed" },
+    { message = "^test", group = "Testing" },
+    { message = "^chore", group = "Changed" },
+    { message = "^ci", group = "CI/CD" },
+    { message = "^build", group = "Build" },
+]
+filter_commits = false
+tag_pattern = "v[0-9]*"
+skip_tags = ""
+
