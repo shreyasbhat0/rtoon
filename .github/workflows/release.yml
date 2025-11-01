@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     
     steps:
       - name: Checkout repository
@@ -76,10 +77,10 @@ jobs:
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
           echo "Default branch: $BRANCH"
       
-      - name: Checkout main branch
+      - name: Checkout default branch
         run: |
           git fetch origin +${{ steps.default_branch.outputs.branch }}:refs/remotes/origin/${{ steps.default_branch.outputs.branch }}
-          git checkout -B ${{ steps.default_branch.outputs.branch }} origin/${{ steps.default_branch.outputs.branch }}
+          git checkout ${{ steps.default_branch.outputs.branch }}
       
       - name: Generate changelog
         id: changelog
@@ -97,15 +98,32 @@ jobs:
           } >> $GITHUB_OUTPUT
           cat CHANGELOG.md
       
-      - name: Commit and push changelog
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
-          if ! git diff --staged --quiet; then
-            git commit -m "chore: update changelog for v${{ steps.get_version.outputs.version }}"
-            git push origin HEAD:${{ steps.default_branch.outputs.branch }}
-          fi
+      - name: Create Pull Request for changelog update
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: chore/changelog-v${{ steps.get_version.outputs.version }}
+          base: ${{ steps.default_branch.outputs.branch }}
+          title: "chore: update changelog for v${{ steps.get_version.outputs.version }}"
+          body: |
+            ## 📝 Changelog Update
+            
+            This PR automatically updates the changelog for release **v${{ steps.get_version.outputs.version }}**.
+            
+            ### Changes
+            - Updated `CHANGELOG.md` with entries for version `v${{ steps.get_version.outputs.version }}`
+            
+            ---
+            
+            This PR was created automatically by the release workflow. Please review and merge to update the changelog on the default branch.
+          commit-message: "chore: update changelog for v${{ steps.get_version.outputs.version }}"
+          author: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+          committer: github-actions[bot] <github-actions[bot]@users.noreply.github.com>
+          labels: |
+            automated
+            changelog
+          delete-branch: true
+          skip-if-no-changes: true
       
       - name: Build release
         run: cargo build --release --verbose
