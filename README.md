@@ -95,7 +95,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rtoon = "0.1.0"
+rtoon = "0.1.3"
 serde_json = "1.0"
 ```
 
