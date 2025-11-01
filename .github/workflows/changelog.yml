@@ -32,9 +32,13 @@ jobs:
           cargo install git-cliff --locked
           git-cliff --version
       
+      - name: Fetch tags for changelog generation
+        run: |
+          git fetch --tags --unshallow 2>/dev/null || git fetch --tags
+      
       - name: Generate changelog
         run: |
-          git-cliff --config cliff.toml --output CHANGELOG.md --unreleased
+          git-cliff --config cliff.toml --output CHANGELOG.md
       
       - name: Check if changelog needs update
         run: |
