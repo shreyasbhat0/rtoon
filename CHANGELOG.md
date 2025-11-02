@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [Unreleased]
+
+
+### Changed
+
+
+- Update changelog for v0.1.3 [1989f95]
+
+- Update release ci (#1) [20f3015]
+
+- Update serde Value with custom JsonValue [5b921a1]
+
+- Rename file and update value usage [cdd5b07]
+
+- Bump cargo version [51e301b]
+
+
 ## [v0.1.3] - 2025-10-31
 
 
