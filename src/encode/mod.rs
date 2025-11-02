@@ -1,7 +1,9 @@
 pub mod primitives;
 pub mod writer;
 
-use serde_json::Value;
+// use serde_json::Value;
+
+use indexmap::IndexMap;
 
 use crate::{
     constants::MAX_DEPTH,
@@ -9,14 +11,49 @@ use crate::{
         ToonError,
         ToonResult,
     },
-    types::EncodeOptions,
+    types::{
+        EncodeOptions,
+        JsonValue as Value,
+    },
     utils::{
         normalize,
         validation::validate_depth,
     },
 };
 
+/// Trait for converting values to JsonValue
+pub trait IntoJsonValue {
+    fn into_json_value(self) -> Value;
+}
+
+impl IntoJsonValue for &Value {
+    fn into_json_value(self) -> Value {
+        self.clone()
+    }
+}
+
+impl IntoJsonValue for Value {
+    fn into_json_value(self) -> Value {
+        self
+    }
+}
+
+impl IntoJsonValue for &serde_json::Value {
+    fn into_json_value(self) -> Value {
+        self.into()
+    }
+}
+
+impl IntoJsonValue for serde_json::Value {
+    fn into_json_value(self) -> Value {
+        (&self).into()
+    }
+}
+
 /// Encode a JSON value to TOON format with custom options.
+///
+/// This function accepts either `JsonValue` or `serde_json::Value` and converts
+/// automatically.
 ///
 /// # Examples
 ///
@@ -30,8 +67,13 @@ use crate::{
 /// assert!(toon.contains("|"));
 /// # Ok::<(), rtoon::ToonError>(())
 /// ```
-pub fn encode(value: &Value, options: &EncodeOptions) -> ToonResult<String> {
-    let normalized = normalize(value.clone());
+pub fn encode<V: IntoJsonValue>(value: V, options: &EncodeOptions) -> ToonResult<String> {
+    let json_value = value.into_json_value();
+    encode_impl(&json_value, options)
+}
+
+fn encode_impl(value: &Value, options: &EncodeOptions) -> ToonResult<String> {
+    let normalized: Value = normalize(value.clone());
     let mut writer = writer::Writer::new(options.clone());
 
     match &normalized {
@@ -50,6 +92,9 @@ pub fn encode(value: &Value, options: &EncodeOptions) -> ToonResult<String> {
 }
 
 /// Encode a JSON value to TOON format with default options.
+///
+/// This function accepts either `JsonValue` or `serde_json::Value` and converts
+/// automatically.
 ///
 /// # Examples
 ///
@@ -79,11 +124,14 @@ pub fn encode(value: &Value, options: &EncodeOptions) -> ToonResult<String> {
 /// assert!(toon.contains("users[2]{id,name}:"));
 /// # Ok::<(), rtoon::ToonError>(())
 /// ```
-pub fn encode_default(value: &Value) -> ToonResult<String> {
+pub fn encode_default<V: IntoJsonValue>(value: V) -> ToonResult<String> {
     encode(value, &EncodeOptions::default())
 }
 
 /// Encode a JSON object to TOON format (errors if not an object).
+///
+/// This function accepts either `JsonValue` or `serde_json::Value` and converts
+/// automatically.
 ///
 /// # Examples
 ///
@@ -99,17 +147,21 @@ pub fn encode_default(value: &Value) -> ToonResult<String> {
 /// assert!(encode_object(&json!(42), &EncodeOptions::default()).is_err());
 /// # Ok::<(), rtoon::ToonError>(())
 /// ```
-pub fn encode_object(value: &Value, options: &EncodeOptions) -> ToonResult<String> {
-    if !value.is_object() {
+pub fn encode_object<V: IntoJsonValue>(value: V, options: &EncodeOptions) -> ToonResult<String> {
+    let json_value = value.into_json_value();
+    if !json_value.is_object() {
         return Err(ToonError::TypeMismatch {
             expected: "object".to_string(),
-            found: value_type_name(value).to_string(),
+            found: value_type_name(&json_value).to_string(),
         });
     }
-    encode(value, options)
+    encode_impl(&json_value, options)
 }
 
 /// Encode a JSON array to TOON format (errors if not an array).
+///
+/// This function accepts either `JsonValue` or `serde_json::Value` and converts
+/// automatically.
 ///
 /// # Examples
 ///
@@ -125,14 +177,15 @@ pub fn encode_object(value: &Value, options: &EncodeOptions) -> ToonResult<Strin
 /// assert!(encode_array(&json!({"key": "value"}), &EncodeOptions::default()).is_err());
 /// # Ok::<(), rtoon::ToonError>(())
 /// ```
-pub fn encode_array(value: &Value, options: &EncodeOptions) -> ToonResult<String> {
-    if !value.is_array() {
+pub fn encode_array<V: IntoJsonValue>(value: V, options: &EncodeOptions) -> ToonResult<String> {
+    let json_value = value.into_json_value();
+    if !json_value.is_array() {
         return Err(ToonError::TypeMismatch {
             expected: "array".to_string(),
-            found: value_type_name(value).to_string(),
+            found: value_type_name(&json_value).to_string(),
         });
     }
-    encode(value, options)
+    encode_impl(&json_value, options)
 }
 
 fn value_type_name(value: &Value) -> &'static str {
@@ -148,7 +201,7 @@ fn value_type_name(value: &Value) -> &'static str {
 
 fn write_object(
     writer: &mut writer::Writer,
-    obj: &serde_json::Map<String, Value>,
+    obj: &IndexMap<String, Value>,
     depth: usize,
 ) -> ToonResult<()> {
     validate_depth(depth, MAX_DEPTH)?;

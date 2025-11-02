@@ -298,8 +298,8 @@ mod tests {
     #[test]
     fn test_normalize_exported() {
         let value = json!(f64::NAN);
-        let normalized = normalize(value);
-        assert_eq!(normalized, json!(null));
+        let normalized = normalize(value.into());
+        assert_eq!(serde_json::Value::from(normalized), json!(null));
     }
 
     #[test]
