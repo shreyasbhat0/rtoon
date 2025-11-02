@@ -1,8 +1,5 @@
 pub mod primitives;
 pub mod writer;
-
-// use serde_json::Value;
-
 use indexmap::IndexMap;
 
 use crate::{
@@ -13,6 +10,7 @@ use crate::{
     },
     types::{
         EncodeOptions,
+        IntoJsonValue,
         JsonValue as Value,
     },
     utils::{
@@ -20,35 +18,6 @@ use crate::{
         validation::validate_depth,
     },
 };
-
-/// Trait for converting values to JsonValue
-pub trait IntoJsonValue {
-    fn into_json_value(self) -> Value;
-}
-
-impl IntoJsonValue for &Value {
-    fn into_json_value(self) -> Value {
-        self.clone()
-    }
-}
-
-impl IntoJsonValue for Value {
-    fn into_json_value(self) -> Value {
-        self
-    }
-}
-
-impl IntoJsonValue for &serde_json::Value {
-    fn into_json_value(self) -> Value {
-        self.into()
-    }
-}
-
-impl IntoJsonValue for serde_json::Value {
-    fn into_json_value(self) -> Value {
-        (&self).into()
-    }
-}
 
 /// Encode a JSON value to TOON format with custom options.
 ///

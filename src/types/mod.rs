@@ -1,13 +1,14 @@
 mod delimeter;
-mod json_value;
 mod options;
+mod value;
 
 pub use delimeter::Delimiter;
-pub use json_value::{
-    JsonValue,
-    Number,
-};
 pub use options::{
     DecodeOptions,
     EncodeOptions,
+};
+pub use value::{
+    IntoJsonValue,
+    JsonValue,
+    Number,
 };

@@ -100,6 +100,7 @@ impl DecodeOptions {
         self.delimiter = Some(delimiter);
         self
     }
+
     /// Enable or disable type coercion (strings like "123" -> numbers).
     pub fn with_coerce_types(mut self, coerce: bool) -> Self {
         self.coerce_types = coerce;

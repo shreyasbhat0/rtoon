@@ -112,8 +112,6 @@ impl fmt::Display for Number {
             Number::PosInt(u) => write!(f, "{}", u),
             Number::NegInt(i) => write!(f, "{}", i),
             Number::Float(fl) => {
-                // Always preserve decimal point for floats to maintain type information
-                // This ensures 0.0 is encoded as "0.0" not "0", so it decodes as a float
                 if fl.fract() == 0.0 && fl.is_finite() {
                     write!(f, "{}.0", *fl as i64)
                 } else {
@@ -124,7 +122,6 @@ impl fmt::Display for Number {
     }
 }
 
-// Implement From for various integer types
 impl From<i8> for Number {
     fn from(n: i8) -> Self {
         Number::NegInt(n as i64)
@@ -205,49 +202,35 @@ pub type Object = IndexMap<String, JsonValue>;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum JsonValue {
-    /// Represents a null value
     Null,
-    /// Represents a boolean
     Bool(bool),
-    /// Represents a number (integer or float)
     Number(Number),
-    /// Represents a string
     String(String),
-    /// Represents an array of values
     Array(Vec<JsonValue>),
-    /// Represents an object (key-value map)
     Object(Object),
 }
 
 impl JsonValue {
-    // ===== Type Checking Methods =====
-
-    /// Returns true if the value is Null
     pub const fn is_null(&self) -> bool {
         matches!(self, JsonValue::Null)
     }
 
-    /// Returns true if the value is a Bool
     pub const fn is_bool(&self) -> bool {
         matches!(self, JsonValue::Bool(_))
     }
 
-    /// Returns true if the value is a Number
     pub const fn is_number(&self) -> bool {
         matches!(self, JsonValue::Number(_))
     }
 
-    /// Returns true if the value is a String
     pub const fn is_string(&self) -> bool {
         matches!(self, JsonValue::String(_))
     }
 
-    /// Returns true if the value is an Array
     pub const fn is_array(&self) -> bool {
         matches!(self, JsonValue::Array(_))
     }
 
-    /// Returns true if the value is an Object
     pub const fn is_object(&self) -> bool {
         matches!(self, JsonValue::Object(_))
     }
@@ -268,15 +251,12 @@ impl JsonValue {
         }
     }
 
-    /// Returns true if the value is a float
     pub fn is_f64(&self) -> bool {
         match self {
             JsonValue::Number(n) => n.is_f64(),
             _ => false,
         }
     }
-
-    // ===== Value Extraction Methods =====
 
     /// If the value is a Bool, returns the associated bool. Returns None
     /// otherwise.
@@ -314,8 +294,6 @@ impl JsonValue {
         }
     }
 
-    /// If the value is a String, returns a reference to the string. Returns
-    /// None otherwise.
     pub fn as_str(&self) -> Option<&str> {
         match self {
             JsonValue::String(s) => Some(s),
@@ -323,8 +301,6 @@ impl JsonValue {
         }
     }
 
-    /// If the value is an Array, returns a reference to the array. Returns None
-    /// otherwise.
     pub fn as_array(&self) -> Option<&Vec<JsonValue>> {
         match self {
             JsonValue::Array(arr) => Some(arr),
@@ -332,8 +308,6 @@ impl JsonValue {
         }
     }
 
-    /// If the value is an Array, returns a mutable reference to the array.
-    /// Returns None otherwise.
     pub fn as_array_mut(&mut self) -> Option<&mut Vec<JsonValue>> {
         match self {
             JsonValue::Array(arr) => Some(arr),
@@ -341,8 +315,6 @@ impl JsonValue {
         }
     }
 
-    /// If the value is an Object, returns a reference to the map. Returns None
-    /// otherwise.
     pub fn as_object(&self) -> Option<&Object> {
         match self {
             JsonValue::Object(obj) => Some(obj),
@@ -350,8 +322,6 @@ impl JsonValue {
         }
     }
 
-    /// If the value is an Object, returns a mutable reference to the map.
-    /// Returns None otherwise.
     pub fn as_object_mut(&mut self) -> Option<&mut Object> {
         match self {
             JsonValue::Object(obj) => Some(obj),
@@ -359,14 +329,11 @@ impl JsonValue {
         }
     }
 
-    // ===== Utility Methods =====
-
     /// Takes the value, leaving Null in its place.
     pub fn take(&mut self) -> JsonValue {
         std::mem::replace(self, JsonValue::Null)
     }
 
-    /// Returns a type name string for this value
     pub fn type_name(&self) -> &'static str {
         match self {
             JsonValue::Null => "null",
@@ -436,7 +403,6 @@ impl IndexMut<usize> for JsonValue {
     }
 }
 
-// Object indexing by &str
 impl Index<&str> for JsonValue {
     type Output = JsonValue;
 
@@ -461,7 +427,6 @@ impl IndexMut<&str> for JsonValue {
     }
 }
 
-// Object indexing by String
 impl Index<String> for JsonValue {
     type Output = JsonValue;
 
@@ -549,5 +514,33 @@ impl From<JsonValue> for serde_json::Value {
 impl From<&JsonValue> for serde_json::Value {
     fn from(value: &JsonValue) -> Self {
         value.clone().into()
+    }
+}
+
+pub trait IntoJsonValue {
+    fn into_json_value(self) -> JsonValue;
+}
+
+impl IntoJsonValue for &JsonValue {
+    fn into_json_value(self) -> JsonValue {
+        self.clone()
+    }
+}
+
+impl IntoJsonValue for JsonValue {
+    fn into_json_value(self) -> JsonValue {
+        self
+    }
+}
+
+impl IntoJsonValue for &serde_json::Value {
+    fn into_json_value(self) -> JsonValue {
+        self.into()
+    }
+}
+
+impl IntoJsonValue for serde_json::Value {
+    fn into_json_value(self) -> JsonValue {
+        (&self).into()
     }
 }
