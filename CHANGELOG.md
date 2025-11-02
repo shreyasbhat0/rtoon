@@ -4,7 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-## [Unreleased]
+## [v0.2.0] - 2025-11-02
+
+
+### Added
+
+
+- Implement custom value type [59e7fe6]
+
 
 
 ### Changed
@@ -19,6 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename file and update value usage [cdd5b07]
 
 - Bump cargo version [51e301b]
+
+- Update change log [96df0a0]
+
+
+
+### Fixed
+
+
+- Remove workflow [06963a7]
 
 
 ## [v0.1.3] - 2025-10-31
