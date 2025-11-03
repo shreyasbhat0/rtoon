@@ -17,4 +17,21 @@ pub fn objects() {
     });
     let out_nested = encode_default(&nested).unwrap();
     println!("\n{}", out_nested);
+
+    let array_object = json!([
+      {
+        "id": 1,
+        "name": "Alice",
+        "email": "alice@example.com",
+        "active": true
+      },
+      {
+        "id": 2,
+        "name": "Bob",
+        "email": "bob@example.com",
+        "active": true
+      }
+    ]);
+    let out = encode_default(&array_object).unwrap();
+    println!("{}", out);
 }
