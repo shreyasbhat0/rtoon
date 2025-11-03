@@ -1,3 +1,12 @@
+
+> 🚀 **Project Moved**
+>
+> This repository (`rtoon`) has been **moved** to the [**toon-format** organization](https://github.com/toon-format/toon-rust) and is now maintained there as the **official Rust implementation** of **TOON (Token-Oriented Object Notation)**.
+>
+> 👉 Please use **[toon-format/toon-rust](https://github.com/toon-format/toon-rust)** for the latest source code, documentation, and updates.
+>
+> Thank you for supporting this project! — *Shreyas K S*
+
 <div align="center">
 
 # 🦀 RToon
