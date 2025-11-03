@@ -471,17 +471,25 @@ pub fn decode_no_coerce_with_options(input: &str, options: &DecodeOptions) -> To
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Indent {
+    Spaces(usize),  // Number of spaces per indent level
+    Tabs,           // Use tabs for indentation
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EncodeOptions {
     pub delimiter: Delimiter,         // default: Delimiter::Comma
     pub length_marker: Option<char>,   // default: None
-    pub indent: String,               // default: "  " (2 spaces)
+    pub indent: Indent,               // default: Indent::Spaces(2)
 }
 
 impl EncodeOptions {
     pub fn new() -> Self
     pub fn with_delimiter(self, delimiter: Delimiter) -> Self
     pub fn with_length_marker(self, marker: char) -> Self
-    pub fn with_indent(self, indent: impl Into<String>) -> Self
+    pub fn with_indent(self, style: Indent) -> Self
+    pub fn with_spaces(self, count: usize) -> Self 
+    pub fn with_tabs(self) -> Self 
 }
 ```
 
@@ -493,7 +501,18 @@ use rtoon::{encode, EncodeOptions, Delimiter};
 let opts = EncodeOptions::new()
     .with_delimiter(Delimiter::Tab)
     .with_length_marker('#')
-    .with_indent("    "); // 4 spaces
+    .with_spaces(4);
+
+// Or 
+let opts = EncodeOptions::new()
+    .with_delimiter(Delimiter::Pipe)
+    .with_length_marker('#')
+    .with_tabs();
+
+// Or 
+use rtoon::types::Indent;
+let opts = EncodeOptions::new()
+    .with_indent(Indent::Spaces(3));
 ```
 
 ### DecodeOptions
