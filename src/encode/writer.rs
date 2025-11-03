@@ -1,5 +1,4 @@
 use crate::{
-    constants::DEFAULT_INDENT,
     error::ToonResult,
     types::{
         Delimiter,
@@ -48,8 +47,10 @@ impl Writer {
     }
 
     pub fn write_indent(&mut self, depth: usize) -> ToonResult<()> {
-        let spaces = DEFAULT_INDENT * depth;
-        self.buffer.push_str(&" ".repeat(spaces));
+        let indent_string = self.options.indent.get_string(depth);
+        if !indent_string.is_empty() {
+            self.buffer.push_str(&indent_string);
+        }
         Ok(())
     }
 

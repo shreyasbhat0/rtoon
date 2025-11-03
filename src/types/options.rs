@@ -1,11 +1,45 @@
-use crate::Delimiter;
+use crate::{
+    constants::DEFAULT_INDENT,
+    Delimiter,
+};
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Indent {
+    Spaces(usize),
+    Tabs,
+}
+
+impl Default for Indent {
+    fn default() -> Self {
+        Indent::Spaces(DEFAULT_INDENT)
+    }
+}
+
+impl Indent {
+    pub fn get_string(&self, depth: usize) -> String {
+        if depth == 0 {
+            return String::new();
+        }
+
+        match self {
+            Indent::Spaces(count) => {
+                if *count > 0 {
+                    " ".repeat(*count * depth)
+                } else {
+                    String::new()
+                }
+            }
+            Indent::Tabs => "\t".repeat(depth),
+        }
+    }
+}
 
 /// Options for encoding JSON values to TOON format.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EncodeOptions {
     pub delimiter: Delimiter,
     pub length_marker: Option<char>,
-    pub indent: String,
+    pub indent: Indent,
 }
 
 impl Default for EncodeOptions {
@@ -13,7 +47,7 @@ impl Default for EncodeOptions {
         Self {
             delimiter: Delimiter::Comma,
             length_marker: None,
-            indent: "  ".to_string(),
+            indent: Indent::default(),
         }
     }
 }
@@ -37,8 +71,8 @@ impl EncodeOptions {
     }
 
     /// Set the indentation string for nested structures.
-    pub fn with_indent(mut self, indent: impl Into<String>) -> Self {
-        self.indent = indent.into();
+    pub fn with_indent(mut self, style: Indent) -> Self {
+        self.indent = style;
         self
     }
 
@@ -53,13 +87,13 @@ impl EncodeOptions {
 
     /// Set indentation to a specific number of spaces.
     pub fn with_spaces(mut self, count: usize) -> Self {
-        self.indent = " ".repeat(count);
+        self.indent = Indent::Spaces(count);
         self
     }
 
     /// Set indentation to tabs.
     pub fn with_tabs(mut self) -> Self {
-        self.indent = "\t".to_string();
+        self.indent = Indent::Tabs;
         self
     }
 }
@@ -123,13 +157,13 @@ mod tests {
     #[test]
     fn test_encode_options_indent() {
         let opts = EncodeOptions::new().with_spaces(4);
-        assert_eq!(opts.indent, "    ");
+        assert_eq!(opts.indent, Indent::Spaces(4));
 
         let opts = EncodeOptions::new().with_tabs();
-        assert_eq!(opts.indent, "\t");
+        assert_eq!(opts.indent, Indent::Tabs);
 
-        let opts = EncodeOptions::new().with_indent("   ");
-        assert_eq!(opts.indent, "   ");
+        let opts = EncodeOptions::new().with_indent(Indent::Spaces(2));
+        assert_eq!(opts.indent, Indent::Spaces(2));
     }
 
     #[test]

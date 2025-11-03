@@ -6,6 +6,7 @@ pub use delimeter::Delimiter;
 pub use options::{
     DecodeOptions,
     EncodeOptions,
+    Indent,
 };
 pub use value::{
     IntoJsonValue,
